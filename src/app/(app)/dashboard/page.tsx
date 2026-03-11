@@ -6,18 +6,21 @@ import RecentDrafts from "./recent-drafts";
 
 export default async function DashboardPage() {
   const session = await auth();
+  const userId = session?.user?.id ?? "";
 
   const [settings, fileCount, watch, recentDrafts] = await Promise.all([
     prisma.companySettings.findUnique({ where: { id: "default" } }),
     prisma.contextFile.count(),
-    prisma.gmailWatch.findUnique({
-      where: { userId: session!.user.id },
-    }),
-    prisma.emailDraft.findMany({
-      where: { createdById: session!.user.id },
-      orderBy: { createdAt: "desc" },
-      take: 10,
-    }),
+    userId
+      ? prisma.gmailWatch.findUnique({ where: { userId } })
+      : null,
+    userId
+      ? prisma.emailDraft.findMany({
+          where: { createdById: userId },
+          orderBy: { createdAt: "desc" },
+          take: 10,
+        })
+      : [],
   ]);
 
   const hasSettings = !!(settings?.companyName || settings?.companyDescription);
