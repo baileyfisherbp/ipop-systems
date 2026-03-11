@@ -5,7 +5,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 
 // Hard-coded owner emails — these are always promoted to OWNER on sign-in
-const OWNER_EMAILS = ["your-owner@example.com"];
+const OWNER_EMAILS = ["hello@baileyfisher.me"];
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
