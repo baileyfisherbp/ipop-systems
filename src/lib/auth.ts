@@ -28,7 +28,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         params: {
           access_type: "offline",
           prompt: "consent",
-          scope: ["openid", "email", "profile"].join(" "),
+          scope: [
+            "openid",
+            "email",
+            "profile",
+            "https://www.googleapis.com/auth/gmail.readonly",
+            "https://www.googleapis.com/auth/gmail.compose",
+            "https://www.googleapis.com/auth/gmail.modify",
+          ].join(" "),
         },
       },
     }),

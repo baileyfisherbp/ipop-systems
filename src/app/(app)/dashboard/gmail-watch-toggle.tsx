@@ -1,0 +1,47 @@
+"use client";
+
+import { useState } from "react";
+
+export default function GmailWatchToggle({
+  initialActive,
+}: {
+  initialActive: boolean;
+}) {
+  const [active, setActive] = useState(initialActive);
+  const [loading, setLoading] = useState(false);
+
+  const handleToggle = async () => {
+    setLoading(true);
+    try {
+      if (active) {
+        const res = await fetch("/api/gmail/watch", { method: "DELETE" });
+        if (res.ok) setActive(false);
+      } else {
+        const res = await fetch("/api/gmail/watch", { method: "POST" });
+        if (res.ok) setActive(true);
+      }
+    } catch (err) {
+      console.error("Failed to toggle Gmail watch:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleToggle}
+      disabled={loading}
+      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
+        active ? "bg-emerald-500" : "bg-zinc-300 dark:bg-zinc-600"
+      }`}
+      role="switch"
+      aria-checked={active}
+    >
+      <span
+        className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm ring-0 transition-transform duration-200 ${
+          active ? "translate-x-5" : "translate-x-0"
+        }`}
+      />
+    </button>
+  );
+}
