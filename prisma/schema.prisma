@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  USER
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  role          UserRole  @default(USER)
+  lastSeenAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts     Account[]
+  sessions     Session[]
+  contextFiles ContextFile[]
+  emailDrafts  EmailDraft[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model AllowedEmail {
+  id    String  @id @default(cuid())
+  email String  @unique
+  note  String?
+}
+
+// --- AI Context & Knowledge ---
+
+model CompanySettings {
+  id                  String  @id @default("default")
+  companyName         String?
+  companyDescription  String? @db.Text
+  services            String? @db.Text
+  targetMarket        String? @db.Text
+  uniqueSellingPoints String? @db.Text
+  caseStudies         String? @db.Text
+  pricingInfo         String? @db.Text
+  writingStyle        String? @db.Text
+  writingTone         String?
+  writingExamples     String? @db.Text
+  skills              String? @db.Text
+  additionalContext   String? @db.Text
+  updatedAt           DateTime @updatedAt
+}
+
+enum FileCategory {
+  general
+  brand
+  case_study
+  pricing
+  process
+  competitor
+  template
+}
+
+model ContextFile {
+  id           String       @id @default(cuid())
+  name         String
+  mimeType     String
+  size         Int
+  content      String?      @db.Text
+  summary      String?      @db.Text
+  category     FileCategory @default(general)
+  uploadedById String
+  createdAt    DateTime     @default(now())
+
+  uploadedBy User @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+}
+
+// --- Email Drafts ---
+
+model EmailDraft {
+  id          String   @id @default(cuid())
+  subject     String?
+  body        String?  @db.Text
+  recipientTo String?
+  context     String?  @db.Text
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User @relation(fields: [createdById], references: [id], onDelete: Cascade)
+}
