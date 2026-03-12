@@ -6,16 +6,9 @@ import { usePathname } from "next/navigation";
 import { signOutAction } from "@/lib/actions";
 import {
   LayoutDashboard,
-  Users,
-  UserPlus,
-  Network,
   Mail,
-  FileText,
-  MessageSquarePlus,
   Settings,
   LogOut,
-  Search,
-  Calendar,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
@@ -25,14 +18,8 @@ import { PresenceAvatars } from "@/components/presence-avatars";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Candidates", href: "/candidates", icon: UserPlus },
-  { label: "Calendar", href: "/calendar", icon: Calendar },
-  { label: "Team", href: "/team", icon: Users },
-  { label: "Email Templates", href: "/email-templates", icon: Mail },
-  { label: "Onboarding Docs", href: "/onboarding-docs", icon: FileText },
-  { label: "Org Chart", href: "/org-chart", icon: Network },
-  { label: "Feedback", href: "/feedback", icon: MessageSquarePlus },
-  { label: "Settings", href: "/settings", icon: Settings },
+  { label: "AI Email Drafter", href: "/email-drafter", icon: Mail },
+  { label: "Settings", href: "/settings/ai", icon: Settings },
 ];
 
 export function Sidebar({
@@ -73,44 +60,6 @@ export function Sidebar({
           <PresenceAvatars currentUserEmail={userEmail} variant="sidebar" />
         )}
       </div>
-
-      {/* Search trigger */}
-      {!collapsed && (
-        <div className="px-3 pt-3 pb-2">
-          <button
-            type="button"
-            onClick={() => {
-              window.dispatchEvent(
-                new KeyboardEvent("keydown", { key: "k", metaKey: true })
-              );
-            }}
-            className="flex w-full items-center gap-3 rounded-md border border-white/[0.08] bg-white/[0.05] px-3 py-2 text-sm text-sidebar-foreground transition-all duration-150 hover:bg-white/[0.1] hover:text-white"
-          >
-            <Search className="h-4 w-4" />
-            <span className="flex-1 text-left">Search...</span>
-            <kbd className="hidden sm:inline-flex text-[10px] text-white/40 font-medium">
-              &thinsp;/F
-            </kbd>
-          </button>
-        </div>
-      )}
-
-      {collapsed && (
-        <div className="px-2 pt-3 pb-2">
-          <button
-            type="button"
-            onClick={() => {
-              window.dispatchEvent(
-                new KeyboardEvent("keydown", { key: "k", metaKey: true })
-              );
-            }}
-            className="flex w-full items-center justify-center rounded-md border border-white/[0.08] bg-white/[0.05] p-2 text-sidebar-foreground transition-all duration-150 hover:bg-white/[0.1] hover:text-white"
-            title="Search"
-          >
-            <Search className="h-4 w-4" />
-          </button>
-        </div>
-      )}
 
       <nav className={cn("flex-1 space-y-0.5 overflow-y-auto", collapsed ? "px-2" : "px-3")}>
         {navItems.map((item) => {

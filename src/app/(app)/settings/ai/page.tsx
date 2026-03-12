@@ -256,15 +256,17 @@ export default function AISettingsPage() {
 
   return (
     <div className="min-h-screen bg-dm-bg">
-      {/* Header bar */}
-      <header className="border-b border-dm-border bg-dm-surface">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-3">
-          <a
-            href="/dashboard"
-            className="text-sm text-dm-text-muted transition-colors duration-150 hover:text-dm-text"
-          >
-            &larr; Dashboard
-          </a>
+      <div className="mx-auto max-w-3xl p-6">
+        {/* Page title + actions */}
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-dm-text">
+              AI Context & Knowledge
+            </h1>
+            <p className="mt-1 text-sm text-dm-text-muted">
+              Configure the context injected into every AI-drafted email
+            </p>
+          </div>
           <div className="flex items-center gap-3">
             {files.length > 0 && (
               <button
@@ -289,18 +291,6 @@ export default function AISettingsPage() {
                     : "Save"}
             </button>
           </div>
-        </div>
-      </header>
-
-      <div className="mx-auto max-w-3xl p-6">
-        {/* Page title */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-dm-text">
-            AI Context & Knowledge
-          </h1>
-          <p className="mt-1 text-sm text-dm-text-muted">
-            Configure the context injected into every AI-drafted email
-          </p>
         </div>
 
         {/* Tabs */}
