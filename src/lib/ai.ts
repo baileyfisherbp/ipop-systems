@@ -10,45 +10,32 @@ interface EmailForDraft {
   threadMessages?: string[];
 }
 
-interface IntegrationContext {
-  type: string;
-  name: string;
-  data?: string;
-}
-
 export async function generateEmailDraft(
   userId: string,
-  email: EmailForDraft,
-  integrationContexts: IntegrationContext[] = []
+  email: EmailForDraft
 ) {
-  const userContext = await prisma.userContext.findUnique({
-    where: { userId },
+  const companySettings = await prisma.companySettings.findUnique({
+    where: { id: "default" },
   });
 
   let systemPrompt = `You are an email assistant. Draft a professional reply to the email below.
 
 Write ONLY the email body — no subject line, no metadata, no "Subject:" prefix. Start directly with the greeting or response content.`;
 
-  if (userContext) {
-    systemPrompt += "\n\nContext about the user:";
-    if (userContext.companyName)
-      systemPrompt += `\n- Company: ${userContext.companyName}`;
-    if (userContext.companyDescription)
-      systemPrompt += `\n- About the company: ${userContext.companyDescription}`;
-    if (userContext.role) systemPrompt += `\n- Their role: ${userContext.role}`;
-    if (userContext.writingStyle)
-      systemPrompt += `\n- Writing style preferences: ${userContext.writingStyle}`;
-    if (userContext.signatureBlock)
-      systemPrompt += `\n- Email signature to use:\n${userContext.signatureBlock}`;
-    if (userContext.additionalNotes)
-      systemPrompt += `\n- Additional notes: ${userContext.additionalNotes}`;
-  }
-
-  if (integrationContexts.length > 0) {
-    systemPrompt += "\n\nAdditional context from connected tools:";
-    for (const ctx of integrationContexts) {
-      systemPrompt += `\n\n[${ctx.name}]:\n${ctx.data || "No data available"}`;
-    }
+  if (companySettings) {
+    systemPrompt += "\n\nContext about the company:";
+    if (companySettings.companyName)
+      systemPrompt += `\n- Company: ${companySettings.companyName}`;
+    if (companySettings.companyDescription)
+      systemPrompt += `\n- About the company: ${companySettings.companyDescription}`;
+    if (companySettings.services)
+      systemPrompt += `\n- Services: ${companySettings.services}`;
+    if (companySettings.writingStyle)
+      systemPrompt += `\n- Writing style preferences: ${companySettings.writingStyle}`;
+    if (companySettings.writingTone)
+      systemPrompt += `\n- Writing tone: ${companySettings.writingTone}`;
+    if (companySettings.additionalContext)
+      systemPrompt += `\n- Additional notes: ${companySettings.additionalContext}`;
   }
 
   let userMessage = `From: ${email.from}\nSubject: ${email.subject}\n\n${email.body}`;

@@ -12,7 +12,7 @@ export async function GET() {
   }
 
   const drafts = await prisma.emailDraft.findMany({
-    where: { userId: session.user.id },
+    where: { createdById: session.user.id },
     orderBy: { createdAt: "desc" },
   });
 
@@ -29,25 +29,12 @@ export async function POST(req: NextRequest) {
   const { messageId, threadId, from, subject, snippet, body } =
     await req.json();
 
-  // Get integration contexts
-  const integrations = await prisma.integration.findMany({
-    where: { userId: session.user.id, enabled: true },
-  });
-
-  const integrationContexts = integrations.map((i) => ({
-    type: i.type,
-    name: i.name,
-    data: i.config
-      ? `Connected ${i.name} integration available`
-      : undefined,
-  }));
-
   // Generate draft with AI
-  const draftBody = await generateEmailDraft(
-    session.user.id,
-    { from, subject, body: body || snippet || "" },
-    integrationContexts
-  );
+  const draftBody = await generateEmailDraft(session.user.id, {
+    from,
+    subject,
+    body: body || snippet || "",
+  });
 
   // Create draft in Gmail
   const gmail = await getGmailClient(session.user.id);
@@ -79,16 +66,14 @@ export async function POST(req: NextRequest) {
   // Save to database
   const draft = await prisma.emailDraft.create({
     data: {
-      userId: session.user.id,
+      createdById: session.user.id,
       gmailMessageId: messageId,
-      threadId: threadId || "",
-      originalFrom: from,
-      originalSubject: subject,
-      originalSnippet: snippet,
-      originalBody: body,
-      draftBody,
-      draftGmailId: gmailDraft.data.id || undefined,
-      status: "sent_to_gmail",
+      gmailThreadId: threadId || undefined,
+      gmailDraftId: gmailDraft.data.id || undefined,
+      recipientTo: from,
+      subject,
+      body: draftBody,
+      context: body || snippet || undefined,
     },
   });
 

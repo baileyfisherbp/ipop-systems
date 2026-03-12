@@ -8,11 +8,11 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const context = await prisma.userContext.findUnique({
-    where: { userId: session.user.id },
+  const settings = await prisma.companySettings.findUnique({
+    where: { id: "default" },
   });
 
-  return NextResponse.json(context || {});
+  return NextResponse.json(settings || {});
 }
 
 export async function PUT(req: NextRequest) {
@@ -23,26 +23,23 @@ export async function PUT(req: NextRequest) {
 
   const data = await req.json();
 
-  const context = await prisma.userContext.upsert({
-    where: { userId: session.user.id },
+  const settings = await prisma.companySettings.upsert({
+    where: { id: "default" },
     create: {
-      userId: session.user.id,
       companyName: data.companyName,
       companyDescription: data.companyDescription,
-      role: data.role,
       writingStyle: data.writingStyle,
-      signatureBlock: data.signatureBlock,
-      additionalNotes: data.additionalNotes,
+      writingTone: data.writingTone,
+      additionalContext: data.additionalContext,
     },
     update: {
       companyName: data.companyName,
       companyDescription: data.companyDescription,
-      role: data.role,
       writingStyle: data.writingStyle,
-      signatureBlock: data.signatureBlock,
-      additionalNotes: data.additionalNotes,
+      writingTone: data.writingTone,
+      additionalContext: data.additionalContext,
     },
   });
 
-  return NextResponse.json(context);
+  return NextResponse.json(settings);
 }

@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getGmailClient } from "@/lib/google";
 
-// PATCH — update draft status (approve/discard)
+// PATCH — update or discard a draft
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -14,10 +14,10 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const { status } = await req.json();
+  const { action } = await req.json();
 
   const draft = await prisma.emailDraft.findFirst({
-    where: { id, userId: session.user.id },
+    where: { id, createdById: session.user.id },
   });
 
   if (!draft) {
@@ -25,12 +25,12 @@ export async function PATCH(
   }
 
   // If discarding, delete the Gmail draft too
-  if (status === "discarded" && draft.draftGmailId) {
+  if (action === "discard" && draft.gmailDraftId) {
     try {
       const gmail = await getGmailClient(session.user.id);
       await gmail.users.drafts.delete({
         userId: "me",
-        id: draft.draftGmailId,
+        id: draft.gmailDraftId,
       });
     } catch {
       // Gmail draft may already be gone
@@ -39,7 +39,7 @@ export async function PATCH(
 
   const updated = await prisma.emailDraft.update({
     where: { id },
-    data: { status },
+    data: { updatedAt: new Date() },
   });
 
   return NextResponse.json(updated);
