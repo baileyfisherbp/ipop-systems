@@ -77,7 +77,9 @@ export default async function DashboardPage() {
                   : "Disabled — enable to automatically draft replies to incoming emails"}
               </p>
             </div>
-            <GmailWatchToggle initialActive={!!watchActive} />
+            <div className="shrink-0">
+              <GmailWatchToggle initialActive={!!watchActive} />
+            </div>
           </div>
         </div>
 
