@@ -56,7 +56,7 @@ export async function POST(request: Request) {
     });
 
     if (!user || !user.gmailWatch?.active) {
-      // User not found or watch not active — ack the message anyway
+      console.log(`[gmail-webhook] No active watch for ${emailAddress} (user found: ${!!user})`);
       return NextResponse.json({ ok: true });
     }
 
@@ -74,7 +74,10 @@ export async function POST(request: Request) {
       data: { historyId: String(newHistoryId) },
     });
 
+    console.log(`[gmail-webhook] History entries: ${historyResult.history?.length ?? 0}, stored historyId: ${watch.historyId}, new historyId: ${newHistoryId}`);
+
     if (!historyResult.history?.length) {
+      console.log(`[gmail-webhook] No history entries — nothing to process`);
       return NextResponse.json({ ok: true, processed: 0 });
     }
 
@@ -89,6 +92,8 @@ export async function POST(request: Request) {
         }
       }
     }
+
+    console.log(`[gmail-webhook] New INBOX messages: ${newMessageIds.size}`);
 
     if (newMessageIds.size === 0) {
       return NextResponse.json({ ok: true, processed: 0 });
@@ -108,7 +113,11 @@ export async function POST(request: Request) {
         const message = await getMessage(accessToken, msgId);
 
         // Skip messages that shouldn't get auto-drafted
-        if (!shouldDraftReply(message)) continue;
+        const from = getHeader(message, "From") ?? "";
+        if (!shouldDraftReply(message)) {
+          console.log(`[gmail-webhook] Skipping message ${msgId} from ${from} (filtered out)`);
+          continue;
+        }
 
         // Skip if we already drafted a reply for this message
         const existingDraft = await prisma.emailDraft.findFirst({
@@ -117,7 +126,6 @@ export async function POST(request: Request) {
         if (existingDraft) continue;
 
         // Extract email details
-        const from = getHeader(message, "From") ?? "";
         const subject = getHeader(message, "Subject") ?? "(no subject)";
         const messageId = getHeader(message, "Message-ID") ?? "";
         const emailBody = extractBody(message);
@@ -185,6 +193,7 @@ export async function POST(request: Request) {
           },
         });
 
+        console.log(`[gmail-webhook] Draft created for message ${msgId} from ${from}`);
         draftsCreated++;
       } catch (err) {
         // Log but don't fail the whole webhook for one message
