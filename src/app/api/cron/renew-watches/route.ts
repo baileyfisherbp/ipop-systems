@@ -49,7 +49,7 @@ export async function GET(request: Request) {
       await prisma.gmailWatch.update({
         where: { id: watch.id },
         data: {
-          historyId: result.historyId,
+          historyId: String(result.historyId),
           expiration: new Date(parseInt(result.expiration)),
         },
       });

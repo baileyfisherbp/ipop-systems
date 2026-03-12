@@ -30,13 +30,13 @@ export async function POST() {
     await prisma.gmailWatch.upsert({
       where: { userId: session.user.id },
       update: {
-        historyId: result.historyId,
+        historyId: String(result.historyId),
         expiration: new Date(parseInt(result.expiration)),
         active: true,
       },
       create: {
         userId: session.user.id,
-        historyId: result.historyId,
+        historyId: String(result.historyId),
         expiration: new Date(parseInt(result.expiration)),
         active: true,
       },
@@ -44,7 +44,7 @@ export async function POST() {
 
     return NextResponse.json({
       ok: true,
-      historyId: result.historyId,
+      historyId: String(result.historyId),
       expiration: result.expiration,
     });
   } catch (error: any) {

@@ -71,7 +71,7 @@ export async function POST(request: Request) {
     // Update the stored historyId
     await prisma.gmailWatch.update({
       where: { id: watch.id },
-      data: { historyId: newHistoryId },
+      data: { historyId: String(newHistoryId) },
     });
 
     if (!historyResult.history?.length) {
