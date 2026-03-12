@@ -10,16 +10,16 @@
   --color-dm-text-muted: #737373;
 
   /* Brand Colors */
-  --color-brand-lime: #158e1d;
-  --color-brand-dark: #01230b;
-  --color-brand-dark-hover: #062e12;
-  --color-brand-orange: #ff4a2c;
-  --color-brand-secondary: #3a7a4a;
+  --color-brand-lime: #e5e5e5;
+  --color-brand-dark: #0a0a0a;
+  --color-brand-dark-hover: #1a1a1a;
+  --color-brand-orange: #a3a3a3;
+  --color-brand-secondary: #525252;
 
   /* Semantic */
-  --color-success: #158e1d;
-  --color-success-bg: rgba(21, 142, 29, 0.1);
-  --color-surface-lime: rgba(21, 142, 29, 0.15);
+  --color-success: #d4d4d4;
+  --color-success-bg: rgba(212, 212, 212, 0.1);
+  --color-surface-lime: rgba(212, 212, 212, 0.15);
 
   /* Fonts */
   --font-sans: var(--font-inter), "Inter", sans-serif;
