@@ -6,9 +6,10 @@ import { ArrowUp } from "lucide-react";
 interface InputBarProps {
   onSend: (message: string) => void;
   disabled: boolean;
+  showBorderAnimation?: boolean;
 }
 
-export default function InputBar({ onSend, disabled }: InputBarProps) {
+export default function InputBar({ onSend, disabled, showBorderAnimation }: InputBarProps) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -38,28 +39,35 @@ export default function InputBar({ onSend, disabled }: InputBarProps) {
   return (
     <div className="shrink-0 px-6 pb-5 pt-3">
       <div className="mx-auto max-w-3xl">
-        <div className="flex items-center gap-3 rounded-2xl border border-dm-border bg-dm-surface px-4 py-2.5 transition-colors focus-within:border-dm-text-muted/30">
-          <textarea
-            ref={textareaRef}
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Message IPOP AI..."
-            rows={1}
-            disabled={disabled}
-            className="flex-1 resize-none bg-transparent text-sm leading-5 text-dm-text outline-none placeholder:text-dm-text-muted/60"
-          />
-          <button
-            onClick={handleSubmit}
-            disabled={disabled || !value.trim()}
-            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all ${
-              active
-                ? "bg-white text-black"
-                : "bg-dm-border/50 text-dm-text-muted opacity-50"
-            }`}
-          >
-            <ArrowUp className="h-4 w-4" strokeWidth={2.5} />
-          </button>
+        <div className={`relative rounded-2xl p-[1px] ${showBorderAnimation ? "border-trace" : ""}`}>
+          {/* Animated border layer */}
+          {showBorderAnimation && (
+            <div className="border-trace-glow pointer-events-none absolute inset-0 rounded-2xl" />
+          )}
+
+          <div className="relative flex items-center gap-3 rounded-2xl border border-dm-border bg-dm-surface px-4 py-2.5 transition-colors focus-within:border-dm-text-muted/30">
+            <textarea
+              ref={textareaRef}
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Message IPOP AI..."
+              rows={1}
+              disabled={disabled}
+              className="flex-1 resize-none bg-transparent text-sm leading-5 text-dm-text outline-none placeholder:text-dm-text-muted/60"
+            />
+            <button
+              onClick={handleSubmit}
+              disabled={disabled || !value.trim()}
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all ${
+                active
+                  ? "bg-brand-lime text-black"
+                  : "bg-dm-border/50 text-dm-text-muted opacity-50"
+              }`}
+            >
+              <ArrowUp className="h-4 w-4" strokeWidth={2.5} />
+            </button>
+          </div>
         </div>
         <p className="mt-2 text-center text-[10px] text-dm-text-muted/50">
           Connected to live data sources. Actions require confirmation.

@@ -49,19 +49,7 @@ export default function LoginPage() {
           Sign in with Google
         </button>
 
-        {process.env.NODE_ENV === "development" && (
-          <button
-            onClick={() =>
-              signIn("credentials", {
-                email: "dev@example.com",
-                callbackUrl: "/dashboard",
-              })
-            }
-            className="flex h-11 w-full items-center justify-center rounded-lg bg-success px-4 text-sm font-medium text-white transition-colors duration-150 hover:brightness-110"
-          >
-            Dev Login (skip Google)
-          </button>
-        )}
+
       </div>
     </div>
   );

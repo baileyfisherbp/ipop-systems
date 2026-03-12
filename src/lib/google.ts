@@ -46,3 +46,8 @@ export async function getDriveClient(userId: string) {
   const auth = await getGoogleAuth(userId);
   return google.drive({ version: "v3", auth });
 }
+
+export async function getCalendarClient(userId: string) {
+  const auth = await getGoogleAuth(userId);
+  return google.calendar({ version: "v3", auth });
+}

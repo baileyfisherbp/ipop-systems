@@ -2,24 +2,47 @@
 
 import { useState, useCallback } from "react";
 import Image from "next/image";
-import { useAgentStream } from "../hooks/useAgentStream";
+import { useAgentStream, AgentMessage } from "../hooks/useAgentStream";
+import { useChatHistory } from "../hooks/useChatHistory";
 import MessageList from "./MessageList";
 import InputBar from "./InputBar";
 import SuggestionChips from "./SuggestionChips";
 import ToolsPanel, { TOOLS } from "./ToolsPanel";
+import ChatHistorySidebar, { CollapsedSidebarButton } from "./ChatHistorySidebar";
 
 const ALL_TOOL_IDS = TOOLS.map((t) => t.id);
 
 export default function AgentChat() {
-  const [location, setLocation] = useState("All Locations");
   const [enabledTools, setEnabledTools] = useState<Set<string>>(
     () => new Set(ALL_TOOL_IDS)
   );
-  const { messages, send, streaming, activeTools, clearMessages } =
-    useAgentStream();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  const chatHistory = useChatHistory();
+
+  // Use a stable callback that reads from refs — avoids stale closure issues
+  const onStreamComplete = useCallback(
+    async (userMsg: AgentMessage, assistantMsg: AgentMessage) => {
+      let chatId = chatHistory.activeChatIdRef.current;
+
+      // Auto-create chat on first send
+      if (!chatId) {
+        chatId = await chatHistory.createChat();
+      }
+
+      await chatHistory.saveMessages(chatId, [userMsg, assistantMsg]);
+
+      // Refresh again after a delay to pick up the AI-generated title
+      setTimeout(() => chatHistory.refreshChats(), 3000);
+    },
+    [chatHistory.createChat, chatHistory.saveMessages, chatHistory.refreshChats, chatHistory.activeChatIdRef]
+  );
+
+  const { messages, send, streaming, activeTools, clearMessages, loadMessages } =
+    useAgentStream(onStreamComplete);
 
   const handleSend = (message: string) => {
-    send(message, location, Array.from(enabledTools));
+    send(message, "All Locations", Array.from(enabledTools));
   };
 
   const handleToggle = useCallback((toolId: string) => {
@@ -34,62 +57,51 @@ export default function AgentChat() {
     });
   }, []);
 
+  const handleSelectChat = useCallback(
+    async (chatId: string) => {
+      const msgs = await chatHistory.loadChat(chatId);
+      loadMessages(msgs);
+    },
+    [chatHistory.loadChat, loadMessages]
+  );
+
+  const handleNewChat = useCallback(() => {
+    chatHistory.startNewChat();
+    clearMessages();
+  }, [chatHistory.startNewChat, clearMessages]);
+
+  const handleDeleteChat = useCallback(
+    async (chatId: string) => {
+      const wasActive = chatHistory.activeChatIdRef.current === chatId;
+      await chatHistory.deleteChat(chatId);
+      if (wasActive) {
+        clearMessages();
+      }
+    },
+    [chatHistory.deleteChat, chatHistory.activeChatIdRef, clearMessages]
+  );
+
   const hasMessages = messages.length > 0;
 
   return (
-    <div className="flex h-full bg-dm-bg">
+    <div className="relative flex h-full bg-dm-bg">
+      {/* Chat history sidebar */}
+      <ChatHistorySidebar
+        chats={chatHistory.chats}
+        activeChatId={chatHistory.activeChatId}
+        onSelectChat={handleSelectChat}
+        onNewChat={handleNewChat}
+        onDeleteChat={handleDeleteChat}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed((c) => !c)}
+      />
+
+      {sidebarCollapsed && (
+        <CollapsedSidebarButton onClick={() => setSidebarCollapsed(false)} />
+      )}
+
       {/* Main chat area */}
       <div className="flex flex-1 flex-col">
-        {/* Top bar */}
-        <div className="flex h-12 shrink-0 items-center justify-between border-b border-dm-border px-6">
-          <div className="flex items-center gap-3">
-            <h1 className="text-sm font-semibold text-dm-text">IPOP AI</h1>
-            <span className="text-xs text-dm-text-muted">/</span>
-            <select
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="rounded-md border border-dm-border bg-dm-surface px-2 py-1 text-xs text-dm-text outline-none"
-            >
-              {[
-                "All Locations",
-                "Burnaby",
-                "Surrey",
-                "Penticton",
-                "Victoria",
-                "Nanaimo",
-              ].map((loc) => (
-                <option key={loc} value={loc}>
-                  {loc}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-center gap-3">
-            {hasMessages && (
-              <button
-                onClick={clearMessages}
-                className="text-xs text-dm-text-muted transition-colors hover:text-dm-text"
-              >
-                New Chat
-              </button>
-            )}
-            <div className="flex items-center gap-2">
-              <div
-                className={`h-1.5 w-1.5 rounded-full transition-all ${
-                  streaming
-                    ? "bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]"
-                    : "bg-dm-text-muted/40"
-                }`}
-              />
-              <span
-                className={`text-[11px] ${streaming ? "text-green-400" : "text-dm-text-muted"}`}
-              >
-                {streaming ? "Thinking..." : "Ready"}
-              </span>
-            </div>
-          </div>
-        </div>
-
         {hasMessages ? (
           <>
             <div className="flex-1 overflow-y-auto">
@@ -107,8 +119,8 @@ export default function AgentChat() {
                 <Image
                   src="/ipop_white_nowordmark.svg"
                   alt=""
-                  width={48}
-                  height={48}
+                  width={96}
+                  height={96}
                 />
               </div>
 
@@ -120,7 +132,7 @@ export default function AgentChat() {
               </div>
             </div>
 
-            <InputBar onSend={handleSend} disabled={streaming} />
+            <InputBar onSend={handleSend} disabled={streaming} showBorderAnimation />
           </div>
         )}
       </div>

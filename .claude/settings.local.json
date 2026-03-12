@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /c/Users/hello/OneDrive/Documents/Github/IPOP-Systems/ipop-systems/src -name \"*provider*\" -o -name \"*layout*\" -o -name \"*sidebar*\" -o -name \"*nav*\" 2>/dev/null | grep -E \"\\\\.\\(tsx|ts|jsx|js\\)$\")",
+      "Bash(cd \"C:\\\\Users\\\\hello\\\\OneDrive\\\\Documents\\\\Github\\\\IPOP-Systems\\\\ipop-systems\" && npm install next-themes)",
+      "Bash(cd \"C:\\\\Users\\\\hello\\\\OneDrive\\\\Documents\\\\Github\\\\IPOP-Systems\\\\ipop-systems\" && npm run dev)",
+      "Bash(find \"/c/Users/hello/OneDrive/Documents/Github/IPOP-Systems/ipop-systems/src/components\" -name \"*avbar\\\\|*nav\\\\|*sidebar\" -type f 2>/dev/null | head -10)",
+      "Bash(ls -la \"/c/Users/hello/OneDrive/Documents/Github/IPOP-Systems/ipop-systems/src/app/\\\\\\(app\\\\\\)/\" | head -20)",
+      "Bash(ls -la \"C:\\\\Users\\\\hello\\\\OneDrive\\\\Documents\\\\Github\\\\IPOP-Systems\\\\ipop-systems\\\\src\\\\app\\\\\\(app\\)\\\\\")",
+      "Bash(find \"/c/Users/hello/OneDrive/Documents/Github/IPOP-Systems/ipop-systems/src/app/\\(app\\)\" -maxdepth 1 -type d)",
+      "Bash(find \"/c/Users/hello/OneDrive/Documents/Github/IPOP-Systems/ipop-systems/src/app/\\(app\\)\" -name \"*.tsx\" -type f | head -20)",
+      "Bash(find \"/c/Users/hello/OneDrive/Documents/Github/IPOP-Systems/ipop-systems/src/app/\\(app\\)/settings\" -type f -name \"*.tsx\")",
+      "Bash(head -40 \"/c/Users/hello/OneDrive/Documents/Github/IPOP-Systems/ipop-systems/src/app/\\(app\\)/dashboard/components/AgentChat.tsx\")",
+      "Bash(cd \"C:\\\\Users\\\\hello\\\\OneDrive\\\\Documents\\\\Github\\\\IPOP-Systems\\\\ipop-systems\" && npx prisma migrate dev --name add-shift-scheduling 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\hello\\\\OneDrive\\\\Documents\\\\Github\\\\IPOP-Systems\\\\ipop-systems\" && npx prisma db push 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\hello\\\\OneDrive\\\\Documents\\\\Github\\\\IPOP-Systems\\\\ipop-systems\" && npx prisma generate 2>&1)",
+      "Bash(ls \"C:\\\\Users\\\\hello\\\\OneDrive\\\\Documents\\\\Github\\\\IPOP-Systems\\\\ipop-systems\\\\src\\\\app\\\\\\(app\\)\")"
+    ]
+  }
+}

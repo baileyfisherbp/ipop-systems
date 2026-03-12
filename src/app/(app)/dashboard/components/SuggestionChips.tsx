@@ -1,12 +1,12 @@
 "use client";
 
 const SUGGESTED_PROMPTS = [
-  "Summarize my unread emails from today",
-  "Draft a follow-up to my last conversation with a client",
-  "What emails need a response this week?",
-  "Draft a meeting request for next Tuesday",
-  "Summarize the email thread about the new project",
-  "Help me write a professional decline to a sales pitch",
+  "Summarize my unread emails",
+  "What meetings do I have today?",
+  "Draft a follow-up email to my last client thread",
+  "Find recent files shared with me on Drive",
+  "Any emails I haven't responded to this week?",
+  "Show my calendar for the rest of the week",
 ];
 
 interface SuggestionChipsProps {
@@ -15,12 +15,12 @@ interface SuggestionChipsProps {
 
 export default function SuggestionChips({ onSelect }: SuggestionChipsProps) {
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="grid grid-cols-2 items-start gap-2">
       {SUGGESTED_PROMPTS.map((prompt, i) => (
         <button
           key={prompt}
           onClick={() => onSelect(prompt)}
-          className="group rounded-xl border border-dm-border/60 px-4 py-3 text-left text-xs leading-snug text-dm-text-muted/70 transition-all duration-200 hover:border-dm-text-muted/30 hover:bg-dm-surface hover:text-dm-text"
+          className="group truncate whitespace-nowrap rounded-xl border border-dm-border px-4 py-3 text-left text-xs leading-snug text-dm-text/80 transition-all duration-200 hover:border-dm-text-muted/50 hover:bg-dm-surface-raised hover:text-dm-text"
           style={{ animationDelay: `${i * 50}ms` }}
         >
           {prompt}

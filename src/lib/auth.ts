@@ -1,6 +1,6 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
-import Credentials from "next-auth/providers/credentials";
+
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 
@@ -12,8 +12,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
 
   session: {
-    // Use JWT in dev (no DB needed), database sessions in production
-    strategy: process.env.NODE_ENV === "development" ? "jwt" : "database",
+    strategy: "database",
   },
 
   pages: {
@@ -35,34 +34,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             "https://www.googleapis.com/auth/gmail.readonly",
             "https://www.googleapis.com/auth/gmail.compose",
             "https://www.googleapis.com/auth/gmail.modify",
+            "https://www.googleapis.com/auth/calendar.readonly",
+            "https://www.googleapis.com/auth/calendar.events",
+            "https://www.googleapis.com/auth/drive.readonly",
           ].join(" "),
         },
       },
     }),
 
-    // Dev-only credentials login
-    ...(process.env.NODE_ENV === "development"
-      ? [
-          Credentials({
-            name: "Dev Login",
-            credentials: {
-              email: { label: "Email", type: "email" },
-            },
-            async authorize(credentials) {
-              const email = (credentials?.email as string)?.toLowerCase();
-              if (!email) return null;
-
-              let user = await prisma.user.findUnique({ where: { email } });
-              if (!user) {
-                user = await prisma.user.create({
-                  data: { email, name: email.split("@")[0], role: "OWNER" },
-                });
-              }
-              return { id: user.id, email: user.email, name: user.name };
-            },
-          }),
-        ]
-      : []),
   ],
 
   callbacks: {
@@ -90,7 +69,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       await prisma.user.updateMany({
         where: { email },
-        data: { role: newRole, lastSeenAt: new Date() },
+        data: {
+          role: newRole,
+          lastSeenAt: new Date(),
+          ...(user.image ? { image: user.image } : {}),
+        },
       });
 
       // --- Persist OAuth Tokens ---

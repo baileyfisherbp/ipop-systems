@@ -2,6 +2,8 @@
 
 const TOOLS = [
   { id: "gmail", label: "Gmail", desc: "Read emails, draft replies, manage inbox" },
+  { id: "calendar", label: "Google Calendar", desc: "View, search, and create calendar events" },
+  { id: "drive", label: "Google Drive", desc: "Search, browse, and read files" },
 ];
 
 interface ToolsPanelProps {
@@ -24,50 +26,50 @@ export default function ToolsPanel({ enabledTools, onToggle, activeTools }: Tool
         </span>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-2 py-2">
-        <div className="space-y-0.5">
+      <div className="flex-1 overflow-y-auto px-3 py-3">
+        <div className="space-y-1">
           {TOOLS.map((tool) => {
             const enabled = enabledTools.has(tool.id);
             const active = activeTools.has(tool.id);
 
             return (
-              <button
+              <div
                 key={tool.id}
-                onClick={() => onToggle(tool.id)}
-                className={`flex w-full items-start gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors ${
+                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors ${
                   active
                     ? "bg-green-500/10"
-                    : enabled
-                      ? "hover:bg-dm-surface-raised"
-                      : "opacity-40 hover:opacity-60"
+                    : "hover:bg-dm-surface-raised"
                 }`}
               >
-                {/* Toggle dot */}
-                <div className="mt-1 shrink-0">
-                  <div
-                    className={`h-2 w-2 rounded-full transition-all ${
-                      active
-                        ? "bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.5)]"
-                        : enabled
-                          ? "bg-dm-text-muted"
-                          : "bg-dm-border"
-                    }`}
-                  />
-                </div>
-
                 <div className="min-w-0 flex-1">
                   <span
-                    className={`block text-xs font-medium ${
+                    className={`block text-sm font-medium ${
                       active ? "text-green-400" : enabled ? "text-dm-text" : "text-dm-text-muted"
                     }`}
                   >
                     {tool.label}
                   </span>
-                  <span className="block text-[10px] leading-tight text-dm-text-muted/60">
+                  <span className="block text-xs leading-snug text-dm-text-muted">
                     {tool.desc}
                   </span>
                 </div>
-              </button>
+
+                {/* Toggle switch */}
+                <button
+                  onClick={() => onToggle(tool.id)}
+                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
+                    enabled ? "bg-brand-lime" : "bg-dm-border"
+                  }`}
+                  role="switch"
+                  aria-checked={enabled}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-4 w-4 rounded-full shadow-sm transition-transform duration-200 ${
+                      enabled ? "translate-x-4 bg-dm-bg" : "translate-x-0 bg-dm-text-muted"
+                    }`}
+                  />
+                </button>
+              </div>
             );
           })}
         </div>

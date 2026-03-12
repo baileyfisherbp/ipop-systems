@@ -28,7 +28,9 @@ model User {
   sessions     Session[]
   contextFiles ContextFile[]
   emailDrafts  EmailDraft[]
+  shifts       Shift[]
   gmailWatch   GmailWatch?
+  chats        Chat[]
 }
 
 model Account {
@@ -130,6 +132,57 @@ model GmailWatch {
   updatedAt    DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// --- Chat History ---
+
+model Chat {
+  id        String        @id @default(cuid())
+  title     String?
+  userId    String
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages ChatMessage[]
+
+  @@index([userId, updatedAt])
+}
+
+model ChatMessage {
+  id             String   @id @default(cuid())
+  chatId         String
+  role           String
+  content        String   @db.Text
+  toolCalls      Json?
+  emails         Json?
+  calendarEvents Json?
+  driveFiles     Json?
+  createdAt      DateTime @default(now())
+
+  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@index([chatId, createdAt])
+}
+
+// --- Shift Scheduling ---
+
+model Shift {
+  id        String   @id @default(cuid())
+  userId    String
+  location  String   @default("Burnaby") // "Burnaby", "Surrey", etc.
+  date      DateTime @db.Date
+  startTime String   // "06:00", "14:00", etc.
+  endTime   String   // "14:00", "22:00", etc.
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([date])
+  @@index([userId, date])
+  @@index([location, date])
 }
 
 // --- Email Drafts ---
