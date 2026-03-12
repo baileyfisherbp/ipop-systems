@@ -17,12 +17,13 @@ interface SuggestionChipsProps {
 
 export default function SuggestionChips({ onSelect }: SuggestionChipsProps) {
   return (
-    <div className="grid max-w-2xl grid-cols-2 gap-2">
-      {SUGGESTED_PROMPTS.map((prompt) => (
+    <div className="grid grid-cols-2 gap-2">
+      {SUGGESTED_PROMPTS.map((prompt, i) => (
         <button
           key={prompt}
           onClick={() => onSelect(prompt)}
-          className="rounded-xl border border-dm-border px-4 py-3 text-left text-xs leading-snug text-dm-text-muted transition-colors hover:bg-dm-surface hover:text-dm-text"
+          className="group rounded-xl border border-dm-border/60 px-4 py-3 text-left text-xs leading-snug text-dm-text-muted/70 transition-all duration-200 hover:border-dm-text-muted/30 hover:bg-dm-surface hover:text-dm-text"
+          style={{ animationDelay: `${i * 50}ms` }}
         >
           {prompt}
         </button>

@@ -89,6 +89,8 @@ model CompanySettings {
   writingExamples     String? @db.Text
   skills              String? @db.Text
   additionalContext   String? @db.Text
+  feedbackRules       String? @db.Text
+  enabledTools        Json?
   updatedAt           DateTime @updatedAt
 }
 
@@ -141,6 +143,8 @@ model EmailDraft {
   gmailMessageId String?
   gmailThreadId  String?
   gmailDraftId   String?
+  rating         Int?
+  feedback       String?  @db.Text
   createdById    String
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 
-type TabId = "company" | "writing" | "skills" | "files";
+type TabId = "company" | "writing" | "skills" | "files" | "feedback" | "tools";
 
 interface Settings {
   companyName?: string;
@@ -17,6 +17,8 @@ interface Settings {
   writingExamples?: string;
   skills?: string;
   additionalContext?: string;
+  feedbackRules?: string;
+  enabledTools?: Record<string, boolean>;
 }
 
 interface ContextFile {
@@ -51,6 +53,77 @@ const FILE_CATEGORIES = [
   { value: "template", label: "Template / Example" },
 ];
 
+const AVAILABLE_TOOLS = [
+  {
+    id: "gmail_read",
+    label: "Gmail - Read Emails",
+    description: "Read recent emails and threads for context when drafting replies",
+    category: "Google",
+  },
+  {
+    id: "google_drive",
+    label: "Google Drive",
+    description: "Search and read documents from Google Drive for reference material",
+    category: "Google",
+  },
+  {
+    id: "google_calendar",
+    label: "Google Calendar",
+    description: "Check your calendar for availability when scheduling meetings via email",
+    category: "Google",
+  },
+  {
+    id: "knowledge_base",
+    label: "Uploaded Knowledge Base",
+    description: "Use your uploaded reference files (brand guides, case studies, pricing, etc.)",
+    category: "Internal",
+  },
+  {
+    id: "company_profile",
+    label: "Company Profile",
+    description: "Use company name, description, services, and other profile information",
+    category: "Internal",
+  },
+  {
+    id: "contact_history",
+    label: "Contact History",
+    description: "Review past email exchanges with the same contact for continuity",
+    category: "Context",
+  },
+  {
+    id: "web_search",
+    label: "Web Search",
+    description: "Search the web for recent information about contacts or their companies",
+    category: "External",
+  },
+  {
+    id: "crm_lookup",
+    label: "CRM Lookup",
+    description: "Look up contact details, deal status, and notes from your CRM",
+    category: "Integrations",
+    comingSoon: true,
+  },
+  {
+    id: "invoice_lookup",
+    label: "Invoice / Billing Lookup",
+    description: "Check invoice status and billing history when responding to payment inquiries",
+    category: "Integrations",
+    comingSoon: true,
+  },
+] as const;
+
+const DEFAULT_TOOLS: Record<string, boolean> = {
+  gmail_read: true,
+  google_drive: false,
+  google_calendar: false,
+  knowledge_base: true,
+  company_profile: true,
+  contact_history: true,
+  web_search: false,
+  crm_lookup: false,
+  invoice_lookup: false,
+};
+
 function TextArea({
   label,
   value,
@@ -66,9 +139,7 @@ function TextArea({
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium text-dm-text">
-        {label}
-      </label>
+      <label className="text-sm font-medium text-dm-text">{label}</label>
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -93,9 +164,7 @@ function Input({
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium text-dm-text">
-        {label}
-      </label>
+      <label className="text-sm font-medium text-dm-text">{label}</label>
       <input
         type="text"
         value={value}
@@ -107,7 +176,53 @@ function Input({
   );
 }
 
-export default function AISettingsPage() {
+function ToolToggle({
+  tool,
+  enabled,
+  onToggle,
+}: {
+  tool: (typeof AVAILABLE_TOOLS)[number];
+  enabled: boolean;
+  onToggle: () => void;
+}) {
+  const comingSoon = "comingSoon" in tool && tool.comingSoon;
+  return (
+    <div
+      className={`flex items-center justify-between rounded-xl border border-dm-border p-4 transition-colors ${
+        comingSoon ? "opacity-50" : ""
+      }`}
+    >
+      <div className="min-w-0 flex-1 pr-4">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-dm-text">{tool.label}</span>
+          {comingSoon && (
+            <span className="rounded-full bg-dm-surface-raised px-2 py-0.5 text-[10px] font-medium text-dm-text-muted">
+              Coming soon
+            </span>
+          )}
+        </div>
+        <p className="mt-0.5 text-xs text-dm-text-muted">{tool.description}</p>
+      </div>
+      <button
+        onClick={onToggle}
+        disabled={!!comingSoon}
+        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-lime disabled:cursor-not-allowed ${
+          enabled ? "bg-brand-lime" : "bg-dm-border"
+        }`}
+        role="switch"
+        aria-checked={enabled}
+      >
+        <span
+          className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm ring-0 transition-transform duration-200 ${
+            enabled ? "translate-x-5" : "translate-x-0"
+          }`}
+        />
+      </button>
+    </div>
+  );
+}
+
+export default function EmailDraftingSettingsPage() {
   const [activeTab, setActiveTab] = useState<TabId>("company");
   const [settings, setSettings] = useState<Settings>({});
   const [files, setFiles] = useState<ContextFile[]>([]);
@@ -129,7 +244,13 @@ export default function AISettingsPage() {
         fetch("/api/settings"),
         fetch("/api/settings/files"),
       ]);
-      if (settingsRes.ok) setSettings(await settingsRes.json());
+      if (settingsRes.ok) {
+        const data = await settingsRes.json();
+        setSettings({
+          ...data,
+          enabledTools: data.enabledTools ?? DEFAULT_TOOLS,
+        });
+      }
       if (filesRes.ok) setFiles(await filesRes.json());
     } finally {
       setLoading(false);
@@ -219,6 +340,16 @@ export default function AISettingsPage() {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
+  const toggleTool = (toolId: string) => {
+    setSettings((prev) => ({
+      ...prev,
+      enabledTools: {
+        ...(prev.enabledTools ?? DEFAULT_TOOLS),
+        [toolId]: !(prev.enabledTools ?? DEFAULT_TOOLS)[toolId],
+      },
+    }));
+  };
+
   const toggleFileExpanded = (id: string) => {
     setExpandedFiles((prev) => {
       const next = new Set(prev);
@@ -229,10 +360,12 @@ export default function AISettingsPage() {
   };
 
   const tabs: { id: TabId; label: string }[] = [
-    { id: "company", label: "Company Profile" },
+    { id: "company", label: "Company" },
     { id: "writing", label: "Writing Style" },
-    { id: "skills", label: "Skills & Knowledge" },
-    { id: "files", label: "Uploaded Files" },
+    { id: "skills", label: "Knowledge" },
+    { id: "files", label: "Files" },
+    { id: "feedback", label: "Feedback Rules" },
+    { id: "tools", label: "Tools" },
   ];
 
   if (loading) {
@@ -254,6 +387,16 @@ export default function AISettingsPage() {
     );
   }
 
+  const enabledTools = settings.enabledTools ?? DEFAULT_TOOLS;
+  const toolsByCategory = AVAILABLE_TOOLS.reduce(
+    (acc, tool) => {
+      if (!acc[tool.category]) acc[tool.category] = [];
+      acc[tool.category].push(tool);
+      return acc;
+    },
+    {} as Record<string, (typeof AVAILABLE_TOOLS)[number][]>
+  );
+
   return (
     <div className="min-h-screen bg-dm-bg">
       <div className="mx-auto max-w-3xl p-6">
@@ -261,14 +404,14 @@ export default function AISettingsPage() {
         <div className="mb-6 flex items-start justify-between">
           <div>
             <h1 className="text-2xl font-bold text-dm-text">
-              AI Context & Knowledge
+              Email Drafting Settings
             </h1>
             <p className="mt-1 text-sm text-dm-text-muted">
-              Configure the context injected into every AI-drafted email
+              Configure how your email drafts are generated
             </p>
           </div>
           <div className="flex items-center gap-3">
-            {files.length > 0 && (
+            {files.length > 0 && activeTab !== "tools" && (
               <button
                 onClick={handleAutoPopulate}
                 disabled={autoPopulating}
@@ -294,12 +437,12 @@ export default function AISettingsPage() {
         </div>
 
         {/* Tabs */}
-        <div className="mb-6 flex gap-1 rounded-lg bg-dm-surface-raised p-1">
+        <div className="mb-6 flex gap-1 overflow-x-auto rounded-lg bg-dm-surface-raised p-1">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150 ${
+              className={`flex-1 whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150 ${
                 activeTab === tab.id
                   ? "bg-dm-surface text-dm-text shadow-sm"
                   : "text-dm-text-muted hover:text-dm-text"
@@ -414,7 +557,7 @@ export default function AISettingsPage() {
           {activeTab === "skills" && (
             <>
               <TextArea
-                label="Skills & Knowledge Base"
+                label="Skills & Expertise"
                 value={settings.skills ?? ""}
                 onChange={(v) => update("skills", v)}
                 placeholder="Certifications, tools, platforms, expertise areas..."
@@ -424,7 +567,7 @@ export default function AISettingsPage() {
                 label="Additional Context"
                 value={settings.additionalContext ?? ""}
                 onChange={(v) => update("additionalContext", v)}
-                placeholder="Any other context the AI should know when drafting emails (industry terminology, compliance notes, etc.)"
+                placeholder="Any other context that should be considered when drafting emails (industry terminology, compliance notes, etc.)"
                 rows={4}
               />
             </>
@@ -450,6 +593,9 @@ export default function AISettingsPage() {
                   {uploading
                     ? "Uploading & processing..."
                     : "Drag & drop files here, or click browse"}
+                </p>
+                <p className="mt-1 text-xs text-dm-text-muted">
+                  Upload reference documents to improve draft accuracy
                 </p>
                 <div className="mt-4 flex items-center justify-center gap-3">
                   <select
@@ -501,7 +647,9 @@ export default function AISettingsPage() {
                           <p className="mt-0.5 text-xs text-dm-text-muted">
                             {(file.size / 1024).toFixed(1)} KB
                             {" · "}
-                            {FILE_CATEGORIES.find((c) => c.value === file.category)?.label ?? file.category}
+                            {FILE_CATEGORIES.find(
+                              (c) => c.value === file.category
+                            )?.label ?? file.category}
                             {" · "}
                             {new Date(file.createdAt).toLocaleDateString()}
                             {file.uploadedBy &&
@@ -539,10 +687,110 @@ export default function AISettingsPage() {
 
               {files.length === 0 && (
                 <p className="text-center text-sm text-dm-text-muted">
-                  No files uploaded yet. Upload reference documents to give the AI
-                  more context for drafting emails.
+                  No files uploaded yet. Upload reference documents to improve
+                  draft accuracy and relevance.
                 </p>
               )}
+            </>
+          )}
+
+          {activeTab === "feedback" && (
+            <>
+              <div className="rounded-2xl border border-dm-border bg-dm-surface p-5">
+                <h3 className="text-sm font-medium text-dm-text mb-1">
+                  Overall Drafting Rules
+                </h3>
+                <p className="text-xs text-dm-text-muted mb-4">
+                  Set rules and corrections that apply to every draft. These are
+                  persistent guidelines the drafter will always follow. Per-draft
+                  feedback can be left on individual drafts from the Email Drafter
+                  page.
+                </p>
+                <TextArea
+                  label=""
+                  value={settings.feedbackRules ?? ""}
+                  onChange={(v) => update("feedbackRules", v)}
+                  placeholder={`Examples:\n- Never use "Best regards" — always sign off with "Thanks,"\n- Always mention our 30-day money-back guarantee when discussing pricing\n- Keep emails under 150 words\n- Don't use exclamation marks\n- When someone asks about timeline, always suggest a call instead of giving estimates over email`}
+                  rows={10}
+                />
+              </div>
+
+              <div className="rounded-2xl border border-dm-border bg-dm-surface p-5">
+                <h3 className="text-sm font-medium text-dm-text mb-1">
+                  How feedback improves drafts
+                </h3>
+                <div className="space-y-3 text-xs text-dm-text-muted">
+                  <div className="flex gap-3">
+                    <span className="shrink-0 mt-0.5">
+                      <svg className="h-4 w-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z" />
+                      </svg>
+                    </span>
+                    <p>
+                      <strong className="text-dm-text">Thumbs up</strong> on a
+                      draft tells the system the tone, structure, and content
+                      were on target.
+                    </p>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="shrink-0 mt-0.5">
+                      <svg className="h-4 w-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M10 15v4a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3H10z" />
+                      </svg>
+                    </span>
+                    <p>
+                      <strong className="text-dm-text">Thumbs down</strong>{" "}
+                      with a note (e.g. &ldquo;too formal&rdquo; or &ldquo;wrong
+                      product&rdquo;) helps identify specific issues.
+                    </p>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="shrink-0 mt-0.5">
+                      <svg className="h-4 w-4 text-brand-lime" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" />
+                      </svg>
+                    </span>
+                    <p>
+                      <strong className="text-dm-text">Rules above</strong> are
+                      injected into every draft request as hard constraints the
+                      drafter must follow.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === "tools" && (
+            <>
+              <div className="rounded-2xl border border-dm-border bg-dm-surface p-5 mb-5">
+                <h3 className="text-sm font-medium text-dm-text mb-1">
+                  Drafter Tools
+                </h3>
+                <p className="text-xs text-dm-text-muted">
+                  Control which tools the email drafter can use to gather
+                  information and take actions. Enabling more tools gives the
+                  drafter richer context for more accurate drafts.
+                </p>
+              </div>
+
+              {Object.entries(toolsByCategory).map(([category, tools]) => (
+                <div key={category}>
+                  <h4 className="mb-2 text-xs font-medium uppercase tracking-wider text-dm-text-muted">
+                    {category}
+                  </h4>
+                  <div className="space-y-2 mb-6">
+                    {tools.map((tool) => (
+                      <ToolToggle
+                        key={tool.id}
+                        tool={tool}
+                        enabled={!!enabledTools[tool.id]}
+                        onToggle={() => toggleTool(tool.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
             </>
           )}
         </div>

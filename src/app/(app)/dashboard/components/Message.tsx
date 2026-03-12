@@ -12,12 +12,12 @@ export default function Message({ message, isStreaming }: MessageProps) {
   const isUser = message.role === "user";
 
   return (
-    <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
+    <div className={`animate-fade-in-up flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
         className={`max-w-[85%] rounded-2xl border px-4 py-3 ${
           isUser
             ? "border-dm-border bg-dm-surface-raised"
-            : "border-dm-border bg-dm-surface"
+            : "border-dm-border/60 bg-transparent"
         }`}
       >
         {message.toolCalls && message.toolCalls.length > 0 && (
@@ -28,11 +28,7 @@ export default function Message({ message, isStreaming }: MessageProps) {
           </div>
         )}
 
-        <div
-          className={`whitespace-pre-wrap text-sm leading-relaxed ${
-            isUser ? "text-dm-text" : "text-dm-text"
-          }`}
-        >
+        <div className="whitespace-pre-wrap text-sm leading-relaxed text-dm-text">
           {message.content}
           {isStreaming && (
             <span className="ml-0.5 inline-block h-4 w-0.5 animate-pulse bg-dm-text" />

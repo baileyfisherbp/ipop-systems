@@ -17,24 +17,31 @@ export default async function EmailDrafterPage() {
       ? prisma.emailDraft.findMany({
           where: { createdById: userId },
           orderBy: { createdAt: "desc" },
-          take: 10,
+          take: 20,
         })
       : [],
   ]);
 
-  const hasSettings = !!(settings?.companyName || settings?.companyDescription);
-  const hasWritingStyle = !!(settings?.writingTone || settings?.writingStyle);
-  const watchActive = watch?.active && new Date() < (watch?.expiration ?? new Date(0));
+  const watchActive =
+    watch?.active && new Date() < (watch?.expiration ?? new Date(0));
+
+  const contextSources: string[] = [];
+  if (settings?.companyName) contextSources.push("Company profile");
+  if (settings?.writingTone || settings?.writingStyle)
+    contextSources.push("Writing style");
+  if (settings?.skills) contextSources.push("Skills & knowledge");
+  if (fileCount > 0)
+    contextSources.push(`${fileCount} reference file${fileCount > 1 ? "s" : ""}`);
 
   return (
     <div className="min-h-full p-6">
       <div className="mx-auto max-w-3xl py-2">
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-dm-text">
-            AI Email Drafter
+            Email Drafter
           </h2>
           <p className="mt-1 text-sm text-dm-text-muted">
-            Automatically draft replies to incoming Gmail messages using AI.
+            Automatically draft replies to incoming Gmail messages.
           </p>
         </div>
 
@@ -47,7 +54,7 @@ export default async function EmailDrafterPage() {
               </h3>
               <p className="mt-0.5 text-xs text-dm-text-muted">
                 {watchActive
-                  ? "Active — incoming emails get AI-drafted replies saved to your Drafts folder"
+                  ? "Active — incoming emails get drafted replies saved to your Drafts folder"
                   : "Disabled — enable to automatically draft replies to incoming emails"}
               </p>
             </div>
@@ -55,67 +62,34 @@ export default async function EmailDrafterPage() {
           </div>
         </div>
 
-        {/* Status Cards */}
-        <div className="grid gap-4 sm:grid-cols-3">
-          <a
-            href="/settings/ai"
-            className="rounded-2xl border border-dm-border bg-dm-surface p-5 transition-colors duration-150 hover:border-dm-border"
-          >
-            <div className="mb-3 flex items-center justify-between">
-              <span className="text-sm font-medium text-dm-text">
-                Company Profile
-              </span>
-              <span
-                className={`h-2 w-2 rounded-full ${hasSettings ? "bg-green-500" : "bg-dm-border"}`}
-              />
+        {/* Context Sources Indicator */}
+        <div className="mb-6 rounded-2xl border border-dm-border bg-dm-surface p-5">
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="text-sm font-medium text-dm-text">
+                Drafting Context
+              </h3>
+              {contextSources.length > 0 ? (
+                <p className="mt-1 text-xs text-dm-text-muted">
+                  Using:{" "}
+                  {contextSources.join(" · ")}
+                </p>
+              ) : (
+                <p className="mt-1 text-xs text-dm-text-muted">
+                  No context configured yet — drafts will use generic responses
+                </p>
+              )}
             </div>
-            <p className="text-xs text-dm-text-muted">
-              {hasSettings
-                ? settings?.companyName ?? "Configured"
-                : "Not configured yet"}
-            </p>
-          </a>
-
-          <a
-            href="/settings/ai"
-            className="rounded-2xl border border-dm-border bg-dm-surface p-5 transition-colors duration-150 hover:border-dm-border"
-          >
-            <div className="mb-3 flex items-center justify-between">
-              <span className="text-sm font-medium text-dm-text">
-                Writing Style
-              </span>
-              <span
-                className={`h-2 w-2 rounded-full ${hasWritingStyle ? "bg-green-500" : "bg-dm-border"}`}
-              />
-            </div>
-            <p className="text-xs text-dm-text-muted">
-              {hasWritingStyle
-                ? `Tone: ${settings?.writingTone ?? "Custom"}`
-                : "Not configured yet"}
-            </p>
-          </a>
-
-          <a
-            href="/settings/ai"
-            className="rounded-2xl border border-dm-border bg-dm-surface p-5 transition-colors duration-150 hover:border-dm-border"
-          >
-            <div className="mb-3 flex items-center justify-between">
-              <span className="text-sm font-medium text-dm-text">
-                Reference Files
-              </span>
-              <span
-                className={`h-2 w-2 rounded-full ${fileCount > 0 ? "bg-green-500" : "bg-dm-border"}`}
-              />
-            </div>
-            <p className="text-xs text-dm-text-muted">
-              {fileCount > 0
-                ? `${fileCount} file${fileCount > 1 ? "s" : ""} uploaded`
-                : "No files uploaded"}
-            </p>
-          </a>
+            <a
+              href="/settings/ai"
+              className="shrink-0 rounded-lg border border-dm-border px-3 py-1.5 text-xs font-medium text-dm-text-muted transition-colors hover:text-dm-text hover:border-dm-text-muted"
+            >
+              Configure
+            </a>
+          </div>
         </div>
 
-        {/* Recent Drafts */}
+        {/* Recent Drafts with Feedback */}
         <RecentDrafts drafts={recentDrafts} />
       </div>
     </div>

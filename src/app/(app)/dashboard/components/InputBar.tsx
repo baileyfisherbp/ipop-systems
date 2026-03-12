@@ -33,34 +33,38 @@ export default function InputBar({ onSend, disabled }: InputBarProps) {
     }
   };
 
+  const active = value.trim() && !disabled;
+
   return (
-    <div className="shrink-0 border-t border-dm-border px-6 py-4">
-      <div className="mx-auto flex max-w-3xl items-end gap-3 rounded-xl border border-dm-border bg-dm-surface px-4 py-3">
-        <textarea
-          ref={textareaRef}
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Ask about bookings, staff, finances, members..."
-          rows={1}
-          disabled={disabled}
-          className="flex-1 resize-none bg-transparent text-sm text-dm-text outline-none placeholder:text-dm-text-muted"
-        />
-        <button
-          onClick={handleSubmit}
-          disabled={disabled || !value.trim()}
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors disabled:opacity-30 ${
-            value.trim() && !disabled
-              ? "bg-dm-text text-dm-bg"
-              : "bg-dm-border text-dm-text-muted"
-          }`}
-        >
-          <ArrowUp className="h-4 w-4" />
-        </button>
+    <div className="shrink-0 px-6 pb-5 pt-3">
+      <div className="mx-auto max-w-3xl">
+        <div className="flex items-end gap-3 rounded-2xl border border-dm-border bg-dm-surface px-4 py-3 transition-colors focus-within:border-dm-text-muted/30">
+          <textarea
+            ref={textareaRef}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Message IPOP AI..."
+            rows={1}
+            disabled={disabled}
+            className="flex-1 resize-none bg-transparent text-sm leading-relaxed text-dm-text outline-none placeholder:text-dm-text-muted/60"
+          />
+          <button
+            onClick={handleSubmit}
+            disabled={disabled || !value.trim()}
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all ${
+              active
+                ? "bg-white text-black"
+                : "bg-dm-border/50 text-dm-text-muted opacity-50"
+            }`}
+          >
+            <ArrowUp className="h-4 w-4" strokeWidth={2.5} />
+          </button>
+        </div>
+        <p className="mt-2 text-center text-[10px] text-dm-text-muted/50">
+          Connected to live data sources. Actions require confirmation.
+        </p>
       </div>
-      <p className="mt-2 text-center text-[10px] text-dm-text-muted">
-        Connected to live IPOP data sources. Actions require confirmation.
-      </p>
     </div>
   );
 }

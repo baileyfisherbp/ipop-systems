@@ -14,7 +14,8 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const { action } = await req.json();
+  const body = await req.json();
+  const { action, rating, feedback } = body;
 
   const draft = await prisma.emailDraft.findFirst({
     where: { id, createdById: session.user.id },
@@ -39,7 +40,11 @@ export async function PATCH(
 
   const updated = await prisma.emailDraft.update({
     where: { id },
-    data: { updatedAt: new Date() },
+    data: {
+      ...(rating !== undefined && { rating }),
+      ...(feedback !== undefined && { feedback }),
+      updatedAt: new Date(),
+    },
   });
 
   return NextResponse.json(updated);

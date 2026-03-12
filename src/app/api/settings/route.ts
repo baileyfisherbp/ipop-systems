@@ -42,6 +42,12 @@ export async function PUT(request: Request) {
       writingExamples: body.writingExamples ?? null,
       skills: body.skills ?? null,
       additionalContext: body.additionalContext ?? null,
+      ...(body.feedbackRules !== undefined && {
+        feedbackRules: body.feedbackRules ?? null,
+      }),
+      ...(body.enabledTools !== undefined && {
+        enabledTools: body.enabledTools,
+      }),
     },
     create: {
       id: "default",
@@ -57,6 +63,12 @@ export async function PUT(request: Request) {
       writingExamples: body.writingExamples ?? null,
       skills: body.skills ?? null,
       additionalContext: body.additionalContext ?? null,
+      ...(body.feedbackRules !== undefined && {
+        feedbackRules: body.feedbackRules ?? null,
+      }),
+      ...(body.enabledTools !== undefined && {
+        enabledTools: body.enabledTools,
+      }),
     },
   });
 
