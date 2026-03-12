@@ -1,26 +1,33 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  /* Dark Mode Design Tokens */
+  --color-dm-bg: #000000;
+  --color-dm-surface: #0a0a0a;
+  --color-dm-surface-raised: #141414;
+  --color-dm-border: #232323;
+  --color-dm-text: #e5e5e5;
+  --color-dm-text-muted: #737373;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Brand Colors */
+  --color-brand-lime: #158e1d;
+  --color-brand-dark: #01230b;
+  --color-brand-dark-hover: #062e12;
+  --color-brand-orange: #ff4a2c;
+  --color-brand-secondary: #3a7a4a;
+
+  /* Semantic */
+  --color-success: #158e1d;
+  --color-success-bg: rgba(21, 142, 29, 0.1);
+  --color-surface-lime: rgba(21, 142, 29, 0.15);
+
+  /* Fonts */
+  --font-sans: var(--font-inter), "Inter", sans-serif;
+  --font-mono: "IBM Plex Mono", Arial, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-dm-bg);
+  color: var(--color-dm-text);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }

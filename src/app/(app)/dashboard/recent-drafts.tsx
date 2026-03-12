@@ -19,14 +19,14 @@ export default function RecentDrafts({ drafts }: { drafts: Draft[] }) {
 
   return (
     <div className="mt-8">
-      <h3 className="mb-3 text-sm font-medium text-zinc-900 dark:text-zinc-100">
+      <h3 className="mb-3 text-sm font-medium text-dm-text">
         Recent Auto-Drafts
       </h3>
       <div className="space-y-2">
         {drafts.map((draft) => (
           <div
             key={draft.id}
-            className="rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950"
+            className="rounded-2xl border border-dm-border bg-dm-surface"
           >
             <button
               onClick={() =>
@@ -35,10 +35,10 @@ export default function RecentDrafts({ drafts }: { drafts: Draft[] }) {
               className="flex w-full items-start justify-between p-4 text-left"
             >
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                <p className="truncate text-sm font-medium text-dm-text">
                   {draft.subject ?? "(no subject)"}
                 </p>
-                <p className="mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="mt-0.5 truncate text-xs text-dm-text-muted">
                   {draft.recipientTo
                     ? `To: ${draft.recipientTo}`
                     : draft.context}
@@ -47,7 +47,7 @@ export default function RecentDrafts({ drafts }: { drafts: Draft[] }) {
                 </p>
               </div>
               <svg
-                className={`ml-2 mt-1 h-4 w-4 shrink-0 text-zinc-400 transition-transform ${
+                className={`ml-2 mt-1 h-4 w-4 shrink-0 text-dm-text-muted transition-transform duration-200 ${
                   expanded === draft.id ? "rotate-180" : ""
                 }`}
                 fill="none"
@@ -63,12 +63,12 @@ export default function RecentDrafts({ drafts }: { drafts: Draft[] }) {
               </svg>
             </button>
             {expanded === draft.id && draft.body && (
-              <div className="border-t border-zinc-100 px-4 py-3 dark:border-zinc-800">
-                <pre className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
+              <div className="border-t border-dm-border px-4 py-3">
+                <pre className="whitespace-pre-wrap text-sm leading-relaxed text-dm-text">
                   {draft.body}
                 </pre>
                 {draft.gmailDraftId && (
-                  <p className="mt-2 text-xs text-zinc-400">
+                  <p className="mt-2 text-xs text-dm-text-muted">
                     Saved to Gmail Drafts
                   </p>
                 )}

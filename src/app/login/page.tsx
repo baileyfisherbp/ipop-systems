@@ -13,20 +13,20 @@ export default function LoginPage() {
   }, [session, router]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
-      <div className="w-full max-w-sm space-y-6 rounded-xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+    <div className="flex min-h-screen items-center justify-center bg-dm-bg">
+      <div className="w-full max-w-sm space-y-6 rounded-2xl border border-dm-border bg-dm-surface p-8 shadow-sm">
         <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+          <h1 className="text-2xl font-bold tracking-tight text-dm-text">
             Sign In
           </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="text-sm text-dm-text-muted">
             Sign in to access your account
           </p>
         </div>
 
         <button
           onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-          className="flex h-11 w-full items-center justify-center gap-3 rounded-lg border border-zinc-300 bg-white px-4 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="flex h-11 w-full items-center justify-center gap-3 rounded-lg border border-dm-border bg-dm-surface-raised px-4 text-sm font-medium text-dm-text transition-colors duration-150 hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-brand-lime focus:border-brand-lime"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24">
             <path
@@ -57,7 +57,7 @@ export default function LoginPage() {
                 callbackUrl: "/dashboard",
               })
             }
-            className="flex h-11 w-full items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="flex h-11 w-full items-center justify-center rounded-lg bg-success px-4 text-sm font-medium text-white transition-colors duration-150 hover:brightness-110"
           >
             Dev Login (skip Google)
           </button>
