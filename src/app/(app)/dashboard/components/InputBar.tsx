@@ -12,7 +12,6 @@ export default function InputBar({ onSend, disabled }: InputBarProps) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-resize textarea
   useEffect(() => {
     const ta = textareaRef.current;
     if (!ta) return;
@@ -35,17 +34,8 @@ export default function InputBar({ onSend, disabled }: InputBarProps) {
   };
 
   return (
-    <div
-      className="shrink-0 border-t px-6 py-4"
-      style={{ borderColor: "var(--agent-border)" }}
-    >
-      <div
-        className="mx-auto flex max-w-3xl items-end gap-3 rounded-xl border px-4 py-3"
-        style={{
-          backgroundColor: "rgba(255,255,255,0.04)",
-          borderColor: "var(--agent-border)",
-        }}
-      >
+    <div className="shrink-0 border-t border-dm-border px-6 py-4">
+      <div className="mx-auto flex max-w-3xl items-end gap-3 rounded-xl border border-dm-border bg-dm-surface px-4 py-3">
         <textarea
           ref={textareaRef}
           value={value}
@@ -54,34 +44,21 @@ export default function InputBar({ onSend, disabled }: InputBarProps) {
           placeholder="Ask about bookings, staff, finances, members..."
           rows={1}
           disabled={disabled}
-          className="flex-1 resize-none bg-transparent text-sm outline-none placeholder:opacity-40"
-          style={{
-            color: "var(--agent-text-primary)",
-            fontFamily: "var(--font-dm-sans), sans-serif",
-          }}
+          className="flex-1 resize-none bg-transparent text-sm text-dm-text outline-none placeholder:text-dm-text-muted"
         />
         <button
           onClick={handleSubmit}
           disabled={disabled || !value.trim()}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors disabled:opacity-30"
-          style={{
-            backgroundColor:
-              value.trim() && !disabled
-                ? "var(--agent-accent)"
-                : "rgba(255,255,255,0.1)",
-            color: value.trim() && !disabled ? "#0a0d0a" : "var(--agent-text-muted)",
-          }}
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors disabled:opacity-30 ${
+            value.trim() && !disabled
+              ? "bg-dm-text text-dm-bg"
+              : "bg-dm-border text-dm-text-muted"
+          }`}
         >
           <ArrowUp className="h-4 w-4" />
         </button>
       </div>
-      <p
-        className="mt-2 text-center text-[10px]"
-        style={{
-          color: "var(--agent-text-muted)",
-          fontFamily: "var(--font-dm-mono), monospace",
-        }}
-      >
+      <p className="mt-2 text-center text-[10px] text-dm-text-muted">
         Connected to live IPOP data sources. Actions require confirmation.
       </p>
     </div>

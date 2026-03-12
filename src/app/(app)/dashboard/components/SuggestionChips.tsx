@@ -22,12 +22,7 @@ export default function SuggestionChips({ onSelect }: SuggestionChipsProps) {
         <button
           key={prompt}
           onClick={() => onSelect(prompt)}
-          className="rounded-xl border px-4 py-3 text-left text-xs leading-snug transition-colors hover:bg-white/5"
-          style={{
-            borderColor: "var(--agent-border)",
-            color: "var(--agent-text-secondary)",
-            fontFamily: "var(--font-dm-sans), sans-serif",
-          }}
+          className="rounded-xl border border-dm-border px-4 py-3 text-left text-xs leading-snug text-dm-text-muted transition-colors hover:bg-dm-surface hover:text-dm-text"
         >
           {prompt}
         </button>

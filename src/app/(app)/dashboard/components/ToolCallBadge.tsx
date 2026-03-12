@@ -17,18 +17,8 @@ export default function ToolCallBadge({ toolName }: { toolName: string }) {
   const label = TOOL_LABELS[toolName] || toolName;
 
   return (
-    <span
-      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium"
-      style={{
-        backgroundColor: "var(--agent-accent-dim)",
-        color: "var(--agent-accent)",
-        fontFamily: "var(--font-dm-mono), monospace",
-      }}
-    >
-      <span
-        className="h-1 w-1 rounded-full"
-        style={{ backgroundColor: "var(--agent-accent)" }}
-      />
+    <span className="inline-flex items-center gap-1 rounded-full bg-dm-surface-raised px-2 py-0.5 text-[10px] font-medium text-dm-text-muted">
+      <span className="h-1 w-1 rounded-full bg-dm-text-muted" />
       {label}
     </span>
   );
