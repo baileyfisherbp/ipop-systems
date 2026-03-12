@@ -4,6 +4,7 @@ const TOOLS = [
   { id: "gmail", label: "Gmail", desc: "Read emails, draft replies, manage inbox" },
   { id: "calendar", label: "Google Calendar", desc: "View, search, and create calendar events" },
   { id: "drive", label: "Google Drive", desc: "Search, browse, and read files" },
+  { id: "scheduling", label: "Staff Scheduling", desc: "View shifts and staff schedules" },
 ];
 
 interface ToolsPanelProps {

@@ -11,6 +11,7 @@ function getToolLabel(toolName: string): string {
   if (toolName.startsWith("gmail") || toolName.includes("email") || toolName.includes("draft")) return "Checking Gmail";
   if (toolName.startsWith("calendar") || toolName.includes("event")) return "Checking Google Calendar";
   if (toolName.startsWith("drive") || toolName.includes("file") || toolName.includes("folder")) return "Checking Google Drive";
+  if (toolName.startsWith("scheduling") || toolName.includes("shift") || toolName.includes("staff")) return "Checking Schedule";
   return "Using " + toolName;
 }
 

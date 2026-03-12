@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@/lib/auth";
 import { getGmailClient, getDriveClient, getCalendarClient } from "@/lib/google";
 import { extractFileContent } from "@/lib/drive-extract";
+import { prisma } from "@/lib/prisma";
 import { NextRequest } from "next/server";
 
 const client = new Anthropic();
@@ -211,11 +212,62 @@ const DRIVE_TOOLS: Anthropic.Tool[] = [
   },
 ];
 
+const SCHEDULING_TOOLS: Anthropic.Tool[] = [
+  {
+    name: "scheduling_list_shifts",
+    description:
+      "List staff shifts for a date range. Returns who is working, when, and at which location.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        start_date: {
+          type: "string",
+          description:
+            "Start date in YYYY-MM-DD format (e.g., '2026-03-12'). Defaults to today.",
+        },
+        end_date: {
+          type: "string",
+          description:
+            "End date in YYYY-MM-DD format. Defaults to 7 days from start_date.",
+        },
+        location: {
+          type: "string",
+          description:
+            "Filter by location (e.g., 'Burnaby', 'Surrey'). Omit to show all locations.",
+        },
+        staff_name: {
+          type: "string",
+          description:
+            "Filter by staff member name (partial match). Omit to show all staff.",
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "scheduling_get_staff_today",
+    description:
+      "Quick lookup: who is working today (or a specific date) across all locations.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        date: {
+          type: "string",
+          description:
+            "Date to check in YYYY-MM-DD format. Defaults to today.",
+        },
+      },
+      required: [],
+    },
+  },
+];
+
 // Maps tool category IDs (from the frontend) to tool definitions
 const TOOL_CATEGORY_MAP: Record<string, Anthropic.Tool[]> = {
   gmail: GMAIL_TOOLS,
   calendar: CALENDAR_TOOLS,
   drive: DRIVE_TOOLS,
+  scheduling: SCHEDULING_TOOLS,
 };
 
 // ---------- Tool execution ----------
@@ -591,6 +643,95 @@ async function executeToolCall(
       }
     }
 
+    // --- Scheduling tools ---
+    if (toolName.startsWith("scheduling_")) {
+      switch (toolName) {
+        case "scheduling_list_shifts": {
+          const now = new Date();
+          const startStr = (input.start_date as string) || now.toISOString().slice(0, 10);
+          const startDate = new Date(startStr + "T00:00:00");
+          const endStr =
+            (input.end_date as string) ||
+            new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000)
+              .toISOString()
+              .slice(0, 10);
+          const endDate = new Date(endStr + "T23:59:59");
+          const location = input.location as string | undefined;
+          const staffName = input.staff_name as string | undefined;
+
+          const where: Record<string, unknown> = {
+            date: { gte: startDate, lte: endDate },
+          };
+          if (location) where.location = location;
+
+          const shifts = await prisma.shift.findMany({
+            where,
+            include: { user: { select: { name: true, email: true } } },
+            orderBy: [{ date: "asc" }, { startTime: "asc" }],
+          });
+
+          let filtered = shifts;
+          if (staffName) {
+            const lower = staffName.toLowerCase();
+            filtered = shifts.filter(
+              (s) =>
+                s.user.name?.toLowerCase().includes(lower) ||
+                s.user.email?.toLowerCase().includes(lower)
+            );
+          }
+
+          const results = filtered.map((s) => ({
+            id: s.id,
+            staff: s.user.name || s.user.email,
+            date: s.date.toISOString().slice(0, 10),
+            startTime: s.startTime,
+            endTime: s.endTime,
+            location: s.location,
+            note: s.note,
+          }));
+
+          return JSON.stringify({
+            results,
+            dateRange: { start: startStr, end: endStr },
+            message:
+              results.length === 0
+                ? "No shifts found for that date range."
+                : undefined,
+          });
+        }
+
+        case "scheduling_get_staff_today": {
+          const dateStr =
+            (input.date as string) || new Date().toISOString().slice(0, 10);
+          const dayStart = new Date(dateStr + "T00:00:00");
+          const dayEnd = new Date(dateStr + "T23:59:59");
+
+          const shifts = await prisma.shift.findMany({
+            where: { date: { gte: dayStart, lte: dayEnd } },
+            include: { user: { select: { name: true, email: true } } },
+            orderBy: [{ location: "asc" }, { startTime: "asc" }],
+          });
+
+          const results = shifts.map((s) => ({
+            staff: s.user.name || s.user.email,
+            startTime: s.startTime,
+            endTime: s.endTime,
+            location: s.location,
+            note: s.note,
+          }));
+
+          return JSON.stringify({
+            date: dateStr,
+            results,
+            message:
+              results.length === 0
+                ? `No one is scheduled for ${dateStr}.`
+                : undefined,
+          });
+        }
+      }
+    }
+
     return JSON.stringify({ error: `Unknown tool: ${toolName}` });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
@@ -664,10 +805,11 @@ TODAY'S DATE: ${todayStr}, ${timeStr}. Always use this date to resolve relative 
 
 ACTIVE LOCATION CONTEXT: ${location === "All Locations" ? "You have visibility across all IPOP locations." : `You are focused on the ${location} location.`}
 
-You have access to the user's Google Workspace via tools. You can:
+You have access to the user's Google Workspace and internal systems via tools. You can:
 - Search their inbox for emails, read messages and threads, and create drafts
 - View and create calendar events
 - Search, browse, and read files from Google Drive
+- View staff shift schedules across all IPOP locations
 
 BEHAVIOR:
 - Be concise and direct. This is an internal ops tool, not a customer chat.

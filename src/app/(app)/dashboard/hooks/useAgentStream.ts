@@ -140,8 +140,14 @@ export function useAgentStream(
                 event.type === "content_block_start" &&
                 event.content_block?.type === "tool_use"
               ) {
-                const toolName = event.content_block.name;
-                setActiveTools((prev) => new Set([...prev, toolName]));
+                const toolName = event.content_block.name as string;
+                // Map tool name to category ID for sidebar glow
+                const category = toolName.startsWith("gmail") ? "gmail"
+                  : toolName.startsWith("calendar") ? "calendar"
+                  : toolName.startsWith("drive") ? "drive"
+                  : toolName.startsWith("scheduling") ? "scheduling"
+                  : toolName;
+                setActiveTools((prev) => new Set([...prev, category]));
 
                 setMessages((prev) => {
                   const updated = [...prev];
@@ -155,7 +161,7 @@ export function useAgentStream(
                 setTimeout(() => {
                   setActiveTools((prev) => {
                     const next = new Set(prev);
-                    next.delete(toolName);
+                    next.delete(category);
                     return next;
                   });
                 }, 2000);
