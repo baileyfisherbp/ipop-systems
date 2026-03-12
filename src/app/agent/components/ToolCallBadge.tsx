@@ -1,16 +1,10 @@
 "use client";
 
 const TOOL_LABELS: Record<string, string> = {
-  get_court_bookings: "Bookings & Courts",
-  get_staff_schedules: "Staff & Scheduling",
-  generate_schedule: "Schedule Generator",
-  get_financial_data: "Finance",
-  search_drive: "Google Drive",
-  get_calendar_events: "Calendar",
-  get_shop_inventory: "Pro Shop",
-  get_member_data: "Members",
-  send_sms_campaign: "Comms",
-  get_analytics: "Analytics",
+  gmail_search: "Gmail Search",
+  gmail_read_message: "Reading Email",
+  gmail_read_thread: "Reading Thread",
+  gmail_create_draft: "Creating Draft",
 };
 
 export default function ToolCallBadge({ toolName }: { toolName: string }) {

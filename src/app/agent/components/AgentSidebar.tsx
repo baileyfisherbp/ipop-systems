@@ -14,52 +14,10 @@ const LOCATIONS = [
 
 const TOOLS = [
   {
-    id: "get_court_bookings",
-    icon: "\u{1F3D3}",
-    label: "Bookings & Courts",
-    desc: "CourtReserve data, occupancy, waitlists",
-  },
-  {
-    id: "get_staff_schedules",
-    icon: "\u{1F465}",
-    label: "Staff & Scheduling",
-    desc: "Shifts, availability, coverage",
-  },
-  {
-    id: "get_financial_data",
-    icon: "\u{1F4CA}",
-    label: "Finance",
-    desc: "QuickBooks, revenue, P&L by location",
-  },
-  {
-    id: "search_drive",
-    icon: "\u{1F4C1}",
-    label: "Google Drive",
-    desc: "SOPs, contracts, coaching docs",
-  },
-  {
-    id: "get_calendar_events",
-    icon: "\u{1F4C5}",
-    label: "Calendar",
-    desc: "Events, clinics, tournaments",
-  },
-  {
-    id: "get_shop_inventory",
-    icon: "\u{1F6D2}",
-    label: "Pro Shop",
-    desc: "Shopify inventory, sales velocity",
-  },
-  {
-    id: "get_member_data",
-    icon: "\u{1F396}\uFE0F",
-    label: "Members",
-    desc: "Profiles, skill ratings, history",
-  },
-  {
-    id: "send_sms_campaign",
-    icon: "\u{1F4AC}",
-    label: "Comms",
-    desc: "Twilio SMS, email campaigns",
+    id: "gmail",
+    icon: "\u{2709}\uFE0F",
+    label: "Gmail",
+    desc: "Read emails, draft replies, manage inbox",
   },
 ];
 

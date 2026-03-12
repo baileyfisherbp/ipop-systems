@@ -14,7 +14,7 @@ export function useAgentStream() {
   const [streaming, setStreaming] = useState(false);
 
   const send = useCallback(
-    async (userMessage: string, location: string) => {
+    async (userMessage: string, location: string, enabledTools?: string[]) => {
       setStreaming(true);
 
       const newMessages: AgentMessage[] = [
@@ -39,6 +39,7 @@ export function useAgentStream() {
               content: m.content,
             })),
             location,
+            enabledTools,
           }),
         });
 
