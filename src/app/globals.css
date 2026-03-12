@@ -16,6 +16,14 @@
   --color-brand-orange: #a3a3a3;
   --color-brand-secondary: #525252;
 
+  /* Sidebar */
+  --color-sidebar: #000000;
+  --color-sidebar-foreground: rgba(255, 255, 255, 0.65);
+  --color-sidebar-accent: rgba(255, 255, 255, 0.1);
+  --color-sidebar-accent-foreground: #ffffff;
+  --color-sidebar-border: rgba(255, 255, 255, 0.08);
+  --color-sidebar-ring: #D0FF71;
+
   /* Semantic */
   --color-success: #d4d4d4;
   --color-success-bg: rgba(212, 212, 212, 0.1);
