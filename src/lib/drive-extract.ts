@@ -1,5 +1,5 @@
 import { drive_v3 } from "googleapis";
-import { PDFParse } from "pdf-parse";
+
 import JSZip from "jszip";
 
 const MAX_CONTENT_LENGTH = 15000;
@@ -205,6 +205,7 @@ export async function extractFileContent(
 
     // PDF
     if (mimeType === "application/pdf") {
+      const { PDFParse } = await import("pdf-parse");
       const parser = new PDFParse({ data: new Uint8Array(buffer) });
       const result = await parser.getText();
       return result.text.slice(0, MAX_CONTENT_LENGTH);
