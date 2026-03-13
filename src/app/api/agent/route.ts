@@ -735,6 +735,24 @@ async function executeToolCall(
     return JSON.stringify({ error: `Unknown tool: ${toolName}` });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    const lower = message.toLowerCase();
+
+    // Detect expired / revoked OAuth tokens and give the user an actionable message
+    if (
+      lower.includes("invalid_grant") ||
+      lower.includes("token has been expired or revoked") ||
+      lower.includes("token refresh") ||
+      lower.includes("unauthorized") ||
+      lower.includes("401") ||
+      lower.includes("google account not connected")
+    ) {
+      return JSON.stringify({
+        error:
+          "Your Google session has expired. Please sign out and sign back in to reconnect your account.",
+        auth_error: true,
+      });
+    }
+
     return JSON.stringify({ error: `Tool execution failed: ${message}` });
   }
 }
@@ -928,6 +946,20 @@ export async function POST(req: NextRequest) {
             await Promise.all(
               toolUseBlocks.map(async (block) => {
                 const result = await executeToolCall(block.name, block.input, userId);
+
+                // Emit auth error event so the frontend can show a sign-out prompt
+                try {
+                  const parsed = JSON.parse(result);
+                  if (parsed.auth_error) {
+                    const authEvent = JSON.stringify({
+                      type: "auth_error",
+                      message: parsed.error,
+                    });
+                    controller.enqueue(encoder.encode(`data: ${authEvent}\n\n`));
+                  }
+                } catch {
+                  // not JSON, skip
+                }
 
                 // Emit structured data for frontend card rendering
                 if (["gmail_search", "gmail_read_message", "gmail_read_thread"].includes(block.name)) {

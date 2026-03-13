@@ -54,6 +54,7 @@ export function useAgentStream(
   const [messages, setMessages] = useState<AgentMessage[]>([]);
   const [activeTools, setActiveTools] = useState<Set<string>>(new Set());
   const [streaming, setStreaming] = useState(false);
+  const [authError, setAuthError] = useState(false);
   const onStreamCompleteRef = useRef(onStreamComplete);
   onStreamCompleteRef.current = onStreamComplete;
   const messagesRef = useRef(messages);
@@ -135,6 +136,11 @@ export function useAgentStream(
                 });
               }
 
+              // Handle auth error — surface a sign-out prompt
+              if (event.type === "auth_error") {
+                setAuthError(true);
+              }
+
               // Handle tool use start — light up the sidebar
               if (
                 event.type === "content_block_start" &&
@@ -153,6 +159,7 @@ export function useAgentStream(
                   const updated = [...prev];
                   const last = { ...updated[updated.length - 1] };
                   last.toolCalls = [...(last.toolCalls || []), toolName];
+                  last.content = ""; // Clear interim text so shimmer animation shows immediately
                   updated[updated.length - 1] = last;
                   return updated;
                 });
@@ -279,5 +286,5 @@ export function useAgentStream(
     setMessages([]);
   }, []);
 
-  return { messages, send, streaming, activeTools, clearMessages, loadMessages };
+  return { messages, send, streaming, activeTools, clearMessages, loadMessages, authError };
 }

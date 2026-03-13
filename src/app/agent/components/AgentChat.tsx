@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { signOut } from "next-auth/react";
 import { useAgentStream } from "../hooks/useAgentStream";
 import AgentSidebar from "./AgentSidebar";
 import MessageList from "./MessageList";
@@ -9,7 +10,7 @@ import SuggestionChips from "./SuggestionChips";
 
 export default function AgentChat() {
   const [location, setLocation] = useState("All Locations");
-  const { messages, send, streaming, activeTools, clearMessages } =
+  const { messages, send, streaming, activeTools, clearMessages, authError } =
     useAgentStream();
 
   const handleSend = (message: string) => {
@@ -110,6 +111,21 @@ export default function AgentChat() {
             </span>
           </div>
         </div>
+
+        {/* Auth error banner */}
+        {authError && (
+          <div className="mx-4 mt-3 flex items-center justify-between rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+            <span>
+              Your Google session has expired. Please sign out and sign back in to reconnect.
+            </span>
+            <button
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              className="ml-4 shrink-0 rounded-md bg-amber-500/20 px-3 py-1 font-medium text-amber-100 transition-colors hover:bg-amber-500/30"
+            >
+              Sign out
+            </button>
+          </div>
+        )}
 
         {/* Messages area */}
         <div className="flex-1 overflow-y-auto">
