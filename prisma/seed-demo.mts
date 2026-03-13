@@ -40,13 +40,13 @@ const sunday = new Date(now);
 sunday.setDate(now.getDate() - now.getDay());
 
 const patterns = [
-  { user: 0, days: [1, 2, 3, 4, 5], start: "06:00", end: "12:00", loc: "Burnaby" },
-  { user: 1, days: [1, 2, 4, 5], start: "12:00", end: "18:00", loc: "Burnaby" },
-  { user: 1, days: [3], start: "18:00", end: "00:00", loc: "Surrey" },
-  { user: 2, days: [1, 3, 5], start: "18:00", end: "00:00", loc: "Burnaby" },
-  { user: 2, days: [2, 4], start: "12:00", end: "18:00", loc: "Surrey" },
-  { user: 0, days: [6], start: "06:00", end: "18:00", loc: "Burnaby", note: "Weekend coverage" },
-  { user: 2, days: [0], start: "12:00", end: "00:00", loc: "Burnaby", note: "Sunday shift" },
+  { user: 0, days: [1, 2, 3, 4, 5], start: "05:30", end: "10:30", loc: "Burnaby" },
+  { user: 1, days: [1, 2, 4, 5], start: "10:30", end: "15:30", loc: "Burnaby" },
+  { user: 1, days: [3], start: "15:30", end: "19:30", loc: "Surrey" },
+  { user: 2, days: [1, 3, 5], start: "19:30", end: "00:30", loc: "Burnaby" },
+  { user: 2, days: [2, 4], start: "15:30", end: "19:30", loc: "Surrey" },
+  { user: 0, days: [6], start: "05:30", end: "15:30", loc: "Burnaby", note: "Weekend coverage" },
+  { user: 2, days: [0], start: "10:30", end: "00:30", loc: "Burnaby", note: "Sunday shift" },
 ];
 
 // Clear old demo shifts

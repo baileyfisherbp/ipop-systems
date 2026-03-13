@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { ChevronLeft, ChevronRight, Plus, X, Trash2, MapPin } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { ChevronLeft, ChevronRight, Plus, X, Trash2, MapPin, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface StaffMember {
@@ -22,24 +22,30 @@ interface Shift {
   user: StaffMember;
 }
 
-type AvailabilityStatus = "available" | "out";
+interface AvailabilitySlot {
+  id: string;
+  userId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  note: string | null;
+  user: StaffMember;
+}
 
 const LOCATIONS = ["Burnaby", "Surrey"];
 
 const PRESET_SHIFTS = [
-  { label: "Morning", start: "06:00", end: "12:00" },
-  { label: "Afternoon", start: "12:00", end: "18:00" },
-  { label: "Evening", start: "18:00", end: "00:00" },
-  { label: "Full AM", start: "06:00", end: "18:00" },
-  { label: "Full PM", start: "12:00", end: "00:00" },
+  { label: "Open", start: "05:30", end: "10:30" },
+  { label: "Daytime", start: "10:30", end: "15:30" },
+  { label: "Evening", start: "15:30", end: "19:30" },
+  { label: "Closing", start: "19:30", end: "00:30" },
 ];
 
-const HOURS = Array.from({ length: 19 }, (_, i) => i + 6);
-
-// Dummy availability — every 3rd staff member is "out"
-function getStaffStatus(staffId: string, allStaff: StaffMember[]): AvailabilityStatus {
-  const index = allStaff.findIndex((s) => s.id === staffId);
-  return index % 3 === 2 ? "out" : "available";
+// Generate half-hour time slots from 5:00 AM to midnight
+const TIME_SLOTS: string[] = [];
+for (let h = 5; h <= 24; h++) {
+  TIME_SLOTS.push(`${String(h % 24).padStart(2, "0")}:00`);
+  if (h < 24) TIME_SLOTS.push(`${String(h).padStart(2, "0")}:30`);
 }
 
 function formatTime(time: string): string {
@@ -111,6 +117,7 @@ export function ShiftCalendar({
 }) {
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [shifts, setShifts] = useState<Shift[]>([]);
+  const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -123,8 +130,8 @@ export function ShiftCalendar({
 
   // Form state
   const [formUserId, setFormUserId] = useState("");
-  const [formStart, setFormStart] = useState("06:00");
-  const [formEnd, setFormEnd] = useState("12:00");
+  const [formStart, setFormStart] = useState("05:30");
+  const [formEnd, setFormEnd] = useState("10:30");
   const [formNote, setFormNote] = useState("");
   const [formLocation, setFormLocation] = useState(LOCATIONS[0]);
   const [saving, setSaving] = useState(false);
@@ -137,15 +144,20 @@ export function ShiftCalendar({
   const fetchShifts = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(
-        `/api/shifts?start=${weekStart}&end=${weekEnd}&location=${encodeURIComponent(selectedLocation)}`
-      );
-      if (res.ok) {
-        const data = await res.json();
-        setShifts(data);
+      const [shiftsRes, availRes] = await Promise.all([
+        fetch(
+          `/api/shifts?start=${weekStart}&end=${weekEnd}&location=${encodeURIComponent(selectedLocation)}`
+        ),
+        fetch(`/api/availability?start=${weekStart}&end=${weekEnd}`),
+      ]);
+      if (shiftsRes.ok) {
+        setShifts(await shiftsRes.json());
+      }
+      if (availRes.ok) {
+        setAvailability(await availRes.json());
       }
     } catch (err) {
-      console.error("Failed to fetch shifts:", err);
+      console.error("Failed to fetch data:", err);
     } finally {
       setLoading(false);
     }
@@ -154,6 +166,26 @@ export function ShiftCalendar({
   useEffect(() => {
     fetchShifts();
   }, [fetchShifts]);
+
+  // Build availability lookup: { "userId:date" => AvailabilitySlot[] }
+  const availabilityMap = useMemo(() => {
+    const map = new Map<string, AvailabilitySlot[]>();
+    for (const slot of availability) {
+      const key = `${slot.userId}:${slot.date.split("T")[0]}`;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(slot);
+    }
+    return map;
+  }, [availability]);
+
+  // Which staff have any availability this week
+  const staffWithAvailability = useMemo(() => {
+    const set = new Set<string>();
+    for (const slot of availability) {
+      set.add(slot.userId);
+    }
+    return set;
+  }, [availability]);
 
   const prevWeek = () => {
     setCurrentDate((d) => {
@@ -177,8 +209,8 @@ export function ShiftCalendar({
     setSelectedDate(date);
     setEditingShift(null);
     setFormUserId(prefilledUserId || staff[0]?.id || "");
-    setFormStart("06:00");
-    setFormEnd("12:00");
+    setFormStart("05:30");
+    setFormEnd("10:30");
     setFormNote("");
     setFormLocation(selectedLocation);
     setError(null);
@@ -280,7 +312,11 @@ export function ShiftCalendar({
           </h3>
           <div className="space-y-1">
             {staff.map((member) => {
-              const status = getStaffStatus(member.id, staff);
+              const hasAvailability = staffWithAvailability.has(member.id);
+              // Count how many days this week the staff is available
+              const availDays = weekDates.filter(
+                (d) => availabilityMap.has(`${member.id}:${dateToString(d)}`)
+              ).length;
               const isDragging = draggingStaff?.id === member.id;
               const initials = (member.name || member.email)
                 .split(" ")
@@ -292,7 +328,7 @@ export function ShiftCalendar({
               return (
                 <div
                   key={member.id}
-                  draggable={isAdmin && status === "available"}
+                  draggable={isAdmin && hasAvailability}
                   onDragStart={(e) => {
                     setDraggingStaff(member);
                     e.dataTransfer.effectAllowed = "copy";
@@ -303,11 +339,11 @@ export function ShiftCalendar({
                   }}
                   className={cn(
                     "flex items-center gap-2.5 rounded-xl px-2.5 py-2 transition-all",
-                    status === "available" && isAdmin && "cursor-grab active:cursor-grabbing",
-                    status === "out" && "opacity-50",
+                    hasAvailability && isAdmin && "cursor-grab active:cursor-grabbing",
+                    !hasAvailability && "opacity-50",
                     isDragging && "opacity-40 ring-2 ring-brand-lime",
                     !isDragging &&
-                      status === "available" &&
+                      hasAvailability &&
                       "hover:bg-dm-surface-raised"
                   )}
                 >
@@ -331,7 +367,7 @@ export function ShiftCalendar({
                     <span
                       className={cn(
                         "absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-dm-surface",
-                        status === "available" ? "bg-green-500" : "bg-gray-500"
+                        hasAvailability ? "bg-green-500" : "bg-gray-500"
                       )}
                     />
                   </div>
@@ -342,12 +378,14 @@ export function ShiftCalendar({
                     <div
                       className={cn(
                         "text-[10px]",
-                        status === "available"
+                        hasAvailability
                           ? "text-green-500"
                           : "text-dm-text-muted"
                       )}
                     >
-                      {status === "available" ? "Available" : "Out"}
+                      {hasAvailability
+                        ? `${availDays} day${availDays !== 1 ? "s" : ""} this week`
+                        : "No availability set"}
                     </div>
                   </div>
                 </div>
@@ -530,6 +568,42 @@ export function ShiftCalendar({
                     )}
                   </div>
 
+                  {/* Show who's available this day */}
+                  {isAdmin && !loading && (() => {
+                    const dayAvail = staff
+                      .map((m) => ({
+                        member: m,
+                        slots: availabilityMap.get(`${m.id}:${ds}`) || [],
+                      }))
+                      .filter((a) => a.slots.length > 0);
+
+                    if (dayAvail.length === 0) return null;
+
+                    return (
+                      <div className="mt-1.5 border-t border-dm-border pt-1.5">
+                        <div className="mb-1 flex items-center gap-1 text-[9px] font-medium uppercase text-dm-text-muted">
+                          <Clock className="h-2.5 w-2.5" />
+                          Available
+                        </div>
+                        <div className="space-y-0.5">
+                          {dayAvail.map(({ member, slots }) => (
+                            <div
+                              key={member.id}
+                              className="rounded px-1.5 py-0.5 text-[10px] text-green-400 bg-green-500/5"
+                            >
+                              <span className="font-medium">
+                                {(member.name || member.email.split("@")[0]).split(" ")[0]}
+                              </span>
+                              <span className="ml-1 opacity-70">
+                                {slots.map((s) => `${formatTime(s.startTime)}–${formatTime(s.endTime)}`).join(", ")}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {isAdmin && !loading && (
                     <button
                       onClick={() => openAddModal(ds)}
@@ -681,14 +755,11 @@ export function ShiftCalendar({
                     onChange={(e) => setFormStart(e.target.value)}
                     className="w-full rounded-lg border border-dm-border bg-dm-surface-raised px-3 py-2 text-sm text-dm-text focus:outline-none focus:ring-2 focus:ring-brand-lime"
                   >
-                    {HOURS.map((h) => {
-                      const val = `${String(h).padStart(2, "0")}:00`;
-                      return (
-                        <option key={val} value={val}>
-                          {formatTime(val)}
-                        </option>
-                      );
-                    })}
+                    {TIME_SLOTS.map((val) => (
+                      <option key={val} value={val}>
+                        {formatTime(val)}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -700,15 +771,11 @@ export function ShiftCalendar({
                     onChange={(e) => setFormEnd(e.target.value)}
                     className="w-full rounded-lg border border-dm-border bg-dm-surface-raised px-3 py-2 text-sm text-dm-text focus:outline-none focus:ring-2 focus:ring-brand-lime"
                   >
-                    {HOURS.filter((h) => h > 6).map((h) => {
-                      const val = `${String(h).padStart(2, "0")}:00`;
-                      return (
-                        <option key={val} value={val}>
-                          {formatTime(val)}
-                        </option>
-                      );
-                    })}
-                    <option value="00:00">{formatTime("00:00")}</option>
+                    {TIME_SLOTS.map((val) => (
+                      <option key={val} value={val}>
+                        {formatTime(val)}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>

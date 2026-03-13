@@ -11,6 +11,7 @@ interface InputBarProps {
 
 export default function InputBar({ onSend, disabled, showBorderAnimation }: InputBarProps) {
   const [value, setValue] = useState("");
+  const [borderFading, setBorderFading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -39,10 +40,18 @@ export default function InputBar({ onSend, disabled, showBorderAnimation }: Inpu
   return (
     <div className="shrink-0 px-6 pb-5 pt-3">
       <div className="mx-auto max-w-3xl">
-        <div className={`relative rounded-2xl p-[1px] ${showBorderAnimation ? "border-trace" : ""}`}>
-          {/* Animated border layer */}
+        <div className="relative rounded-2xl p-[1px]">
+          {/* Animated border layers — separate from content so fade doesn't affect the text box */}
           {showBorderAnimation && (
-            <div className="border-trace-glow pointer-events-none absolute inset-0 rounded-2xl" />
+            <>
+              <div
+                className={`border-trace pointer-events-none absolute inset-0 rounded-2xl ${borderFading ? "border-trace-fadeout" : ""}`}
+                onAnimationEnd={(e) => {
+                  if (e.animationName === "border-rotate") setBorderFading(true);
+                }}
+              />
+              <div className={`border-trace-glow pointer-events-none absolute inset-0 rounded-2xl ${borderFading ? "border-trace-fadeout" : ""}`} />
+            </>
           )}
 
           <div className="relative flex items-center gap-3 rounded-2xl border border-dm-border bg-dm-surface px-4 py-2.5 transition-colors focus-within:border-dm-text-muted/30">

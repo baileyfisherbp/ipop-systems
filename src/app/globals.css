@@ -138,14 +138,20 @@ body {
   }
 }
 
-/* Border trace animation */
+/* Border trace animation — keyframes compensate for rectangular geometry
+   so the highlight travels at a more uniform *perimeter* speed instead of
+   uniform *angular* speed.  The input bar is very wide & short, so the
+   top/bottom edges span ~172° each while the sides only span ~8°. */
 @keyframes border-rotate {
-  from {
-    --border-angle: 0deg;
-  }
-  to {
-    --border-angle: 360deg;
-  }
+  0%   { --border-angle: 0deg; }
+  /* top edge — covers 172° over 47% of the perimeter */
+  47%  { --border-angle: 172deg; }
+  /* right side — covers 8° over 3% of the perimeter */
+  50%  { --border-angle: 180deg; }
+  /* bottom edge — covers 172° over 47% of the perimeter */
+  97%  { --border-angle: 352deg; }
+  /* left side — covers 8° over 3% of the perimeter */
+  100% { --border-angle: 360deg; }
 }
 
 @property --border-angle {
@@ -156,29 +162,38 @@ body {
 
 .border-trace {
   background: conic-gradient(
-    from var(--border-angle) at 50% 50%,
+    from calc(var(--border-angle) + 274deg) at 50% 50%,
     transparent 0%,
     transparent 75%,
     #d0ff71 88%,
     #d0ff71aa 94%,
     transparent 100%
   );
-  animation: border-rotate 2.5s linear 1;
+  animation: border-rotate 3s linear 1;
   animation-fill-mode: forwards;
 }
 
 .border-trace-glow {
   background: conic-gradient(
-    from var(--border-angle) at 50% 50%,
+    from calc(var(--border-angle) + 274deg) at 50% 50%,
     transparent 0%,
     transparent 75%,
     rgba(208, 255, 113, 0.25) 88%,
     rgba(208, 255, 113, 0.12) 94%,
     transparent 100%
   );
-  animation: border-rotate 2.5s linear 1;
+  animation: border-rotate 3s linear 1;
   animation-fill-mode: forwards;
   filter: blur(8px);
+}
+
+@keyframes border-fadeout {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+.border-trace-fadeout {
+  animation: border-fadeout 0.6s ease-out forwards !important;
 }
 
 /* Markdown prose styles for chat messages */

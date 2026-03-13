@@ -28,9 +28,10 @@ model User {
   sessions     Session[]
   contextFiles ContextFile[]
   emailDrafts  EmailDraft[]
-  shifts       Shift[]
-  gmailWatch   GmailWatch?
-  chats        Chat[]
+  shifts         Shift[]
+  availabilities Availability[]
+  gmailWatch     GmailWatch?
+  chats          Chat[]
 }
 
 model Account {
@@ -183,6 +184,23 @@ model Shift {
   @@index([date])
   @@index([userId, date])
   @@index([location, date])
+}
+
+model Availability {
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime @db.Date
+  startTime String   // "06:00", "14:00", etc.
+  endTime   String   // "14:00", "22:00", etc.
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date, startTime, endTime])
+  @@index([date])
+  @@index([userId, date])
 }
 
 // --- Email Drafts ---
