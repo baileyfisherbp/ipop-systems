@@ -1005,9 +1005,11 @@ export async function POST(req: NextRequest) {
       try {
         await processStream(stream);
       } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown stream error";
+        console.error("[Agent API] Stream error:", message, error);
         const errorData = JSON.stringify({
           type: "error",
-          error: { message: "Stream error" },
+          error: { message },
         });
         controller.enqueue(encoder.encode(`data: ${errorData}\n\n`));
       }

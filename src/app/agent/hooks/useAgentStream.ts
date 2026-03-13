@@ -215,6 +215,19 @@ export function useAgentStream() {
                 }
               }
 
+              // Handle error events from the server
+              if (event.type === "error") {
+                const errorMsg = event.error?.message || "Something went wrong. Please try again.";
+                console.error("[Agent] Server error:", errorMsg);
+                setMessages((prev) => {
+                  const updated = [...prev];
+                  const last = { ...updated[updated.length - 1] };
+                  last.content = `Error: ${errorMsg}`;
+                  updated[updated.length - 1] = last;
+                  return updated;
+                });
+              }
+
               // Stream text delta
               if (
                 event.type === "content_block_delta" &&
@@ -233,7 +246,8 @@ export function useAgentStream() {
             }
           }
         }
-      } catch {
+      } catch (err) {
+        console.error("[Agent] Connection error:", err);
         setMessages((prev) => {
           const updated = [...prev];
           if (updated.length > 0) {
@@ -244,6 +258,21 @@ export function useAgentStream() {
           return updated;
         });
       }
+
+      // If streaming ended but the assistant message is still empty, show an error
+      setMessages((prev) => {
+        const updated = [...prev];
+        if (updated.length > 0) {
+          const last = updated[updated.length - 1];
+          if (last.role === "assistant" && !last.content.trim()) {
+            const patched = { ...last };
+            patched.content = "Error: No response received. This may be due to an API issue or insufficient tokens. Please try again.";
+            updated[updated.length - 1] = patched;
+            return updated;
+          }
+        }
+        return prev;
+      });
 
       setStreaming(false);
     },

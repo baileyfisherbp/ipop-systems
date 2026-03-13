@@ -27,28 +27,40 @@ export default function Message({ message, isStreaming }: MessageProps) {
   const hasCalendarEvents = message.calendarEvents && message.calendarEvents.length > 0;
   const hasDriveFiles = message.driveFiles && message.driveFiles.length > 0;
 
-  // Thinking / tool-use state — rendered without the bubble wrapper
-  if (isStreaming && !message.content && !isUser) {
-    const lastTool = message.toolCalls?.length
-      ? message.toolCalls[message.toolCalls.length - 1]
-      : null;
-    const label = lastTool ? getToolLabel(lastTool) : "Thinking";
+  const hasContent = message.content.trim().length > 0;
+  const hasToolCalls = message.toolCalls && message.toolCalls.length > 0;
+  const hasAnyData = hasContent || hasEmails || hasCalendarEvents || hasDriveFiles || hasToolCalls;
 
-    return (
-      <div className="flex justify-start">
-        <span
-          key={label}
-          className="animate-shimmer-text text-sm font-medium"
-          style={{
-            "--shimmer-base": "rgba(255,255,255,0.25)",
-            "--shimmer-highlight": "var(--agent-accent)",
-            fontFamily: "var(--font-dm-sans), sans-serif",
-          } as React.CSSProperties}
-        >
-          {label}...
-        </span>
-      </div>
-    );
+  // Thinking / tool-use state — rendered without the bubble wrapper
+  if (!hasContent && !isUser) {
+    // Still streaming: show shimmer label
+    if (isStreaming) {
+      const lastTool = hasToolCalls
+        ? message.toolCalls![message.toolCalls!.length - 1]
+        : null;
+      const label = lastTool ? getToolLabel(lastTool) : "Thinking";
+
+      return (
+        <div className="flex justify-start">
+          <span
+            key={label}
+            className="animate-shimmer-text text-sm font-medium"
+            style={{
+              "--shimmer-base": "rgba(255,255,255,0.25)",
+              "--shimmer-highlight": "var(--agent-accent)",
+              fontFamily: "var(--font-dm-sans), sans-serif",
+            } as React.CSSProperties}
+          >
+            {label}...
+          </span>
+        </div>
+      );
+    }
+
+    // Done streaming with no content and no data — don't render an empty bubble
+    if (!hasAnyData) {
+      return null;
+    }
   }
 
   return (
