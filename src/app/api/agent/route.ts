@@ -801,7 +801,7 @@ function formatFileSize(bytes: number): string {
 
 // ---------- System prompt ----------
 
-function buildSystemPrompt(location: string): string {
+function buildSystemPrompt(location: string, user: { name?: string | null; email?: string | null }): string {
   const now = new Date();
   const todayStr = now.toLocaleDateString("en-US", {
     weekday: "long",
@@ -817,9 +817,15 @@ function buildSystemPrompt(location: string): string {
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   });
 
+  const userLine = user.name
+    ? `CURRENT USER: ${user.name}${user.email ? ` (${user.email})` : ""}`
+    : user.email
+      ? `CURRENT USER: ${user.email}`
+      : "";
+
   return `You are IPOP's internal AI operations agent. IPOP (Inclusive Place of Pickleball) is a Canadian multi-location indoor pickleball facility with locations in Burnaby, Surrey, Penticton, Victoria, and Nanaimo.
 
-TODAY'S DATE: ${todayStr}, ${timeStr}. Always use this date to resolve relative references like "today", "tomorrow", "Monday", "next week", etc.
+${userLine ? `${userLine}\n` : ""}TODAY'S DATE: ${todayStr}, ${timeStr}. Always use this date to resolve relative references like "today", "tomorrow", "Monday", "next week", etc.
 
 ACTIVE LOCATION CONTEXT: ${location === "All Locations" ? "You have visibility across all IPOP locations." : `You are focused on the ${location} location.`}
 
@@ -864,7 +870,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const systemPrompt = buildSystemPrompt(location || "All Locations");
+  const systemPrompt = buildSystemPrompt(location || "All Locations", session.user);
 
   let currentMessages = [...messages];
 

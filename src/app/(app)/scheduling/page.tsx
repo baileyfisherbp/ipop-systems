@@ -21,7 +21,7 @@ export default async function SchedulingPage() {
   const currentUser = staff.find((s) => s.id === session.user!.id);
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-8">
+    <div className="px-6 py-8">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-dm-text">
           Shift Scheduling
