@@ -180,7 +180,7 @@ export function AvailabilityForm({ userName }: { userName: string | null }) {
               {/* Preset buttons — tap to toggle availability */}
               {!isPast && (
                 <div className="mt-2 grid grid-cols-1 gap-1">
-                  {PRESET_SLOTS.slice(0, 3).map((p) => {
+                  {PRESET_SLOTS.map((p) => {
                     const isActive = daySlots.some(
                       (s) => s.startTime === p.start && s.endTime === p.end
                     );
