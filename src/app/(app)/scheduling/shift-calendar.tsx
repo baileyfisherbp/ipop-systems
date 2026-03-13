@@ -90,6 +90,43 @@ function getShiftColorLight(userId: string): string {
   return colors[Math.abs(hash) % colors.length];
 }
 
+// Merge overlapping/adjacent time ranges into continuous blocks
+function mergeTimeRanges(
+  slots: { startTime: string; endTime: string }[]
+): { startTime: string; endTime: string }[] {
+  if (slots.length === 0) return [];
+
+  const toMinutes = (t: string) => {
+    const [h, m] = t.split(":").map(Number);
+    // Treat 00:xx as 24:xx so midnight sorts after evening times
+    return (h === 0 ? 24 : h) * 60 + m;
+  };
+  const fromMinutes = (mins: number) => {
+    const h = Math.floor(mins / 60) % 24;
+    const m = mins % 60;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  };
+
+  const sorted = slots
+    .map((s) => ({ start: toMinutes(s.startTime), end: toMinutes(s.endTime) }))
+    .sort((a, b) => a.start - b.start);
+
+  const merged: { start: number; end: number }[] = [sorted[0]];
+  for (let i = 1; i < sorted.length; i++) {
+    const last = merged[merged.length - 1];
+    if (sorted[i].start <= last.end) {
+      last.end = Math.max(last.end, sorted[i].end);
+    } else {
+      merged.push({ ...sorted[i] });
+    }
+  }
+
+  return merged.map((r) => ({
+    startTime: fromMinutes(r.start),
+    endTime: fromMinutes(r.end),
+  }));
+}
+
 function getAvatarBg(userId: string): string {
   const colors = [
     "bg-blue-500",
@@ -123,6 +160,15 @@ export function ShiftCalendar({
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [editingShift, setEditingShift] = useState<Shift | null>(null);
   const [selectedLocation, setSelectedLocation] = useState(LOCATIONS[0]);
+
+  // Confirm-from-availability modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    member: StaffMember;
+    date: string;
+    startTime: string;
+    endTime: string;
+  } | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
   // Drag state
   const [draggingStaff, setDraggingStaff] = useState<StaffMember | null>(null);
@@ -284,6 +330,35 @@ export function ShiftCalendar({
       fetchShifts();
     } catch (err) {
       console.error("Failed to delete shift:", err);
+    }
+  };
+
+  const handleConfirmAvailability = async () => {
+    if (!confirmModal) return;
+    setConfirming(true);
+    try {
+      const res = await fetch("/api/shifts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: confirmModal.member.id,
+          date: confirmModal.date,
+          startTime: confirmModal.startTime,
+          endTime: confirmModal.endTime,
+          location: selectedLocation,
+          note: null,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        console.error("Failed to confirm shift:", data?.error);
+      }
+      setConfirmModal(null);
+      fetchShifts();
+    } catch (err) {
+      console.error("Failed to confirm shift:", err);
+    } finally {
+      setConfirming(false);
     }
   };
 
@@ -568,7 +643,7 @@ export function ShiftCalendar({
                     )}
                   </div>
 
-                  {/* Show who's available this day */}
+                  {/* Show who's available this day — merged blocks, clickable */}
                   {isAdmin && !loading && (() => {
                     const dayAvail = staff
                       .map((m) => ({
@@ -586,19 +661,30 @@ export function ShiftCalendar({
                           Available
                         </div>
                         <div className="space-y-0.5">
-                          {dayAvail.map(({ member, slots }) => (
-                            <div
-                              key={member.id}
-                              className="rounded px-1.5 py-0.5 text-[10px] text-green-400 bg-green-500/5"
-                            >
-                              <span className="font-medium">
-                                {(member.name || member.email.split("@")[0]).split(" ")[0]}
-                              </span>
-                              <span className="ml-1 opacity-70">
-                                {slots.map((s) => `${formatTime(s.startTime)}–${formatTime(s.endTime)}`).join(", ")}
-                              </span>
-                            </div>
-                          ))}
+                          {dayAvail.map(({ member, slots }) => {
+                            const merged = mergeTimeRanges(slots);
+                            return merged.map((block, blockIdx) => (
+                              <button
+                                key={`${member.id}-${blockIdx}`}
+                                onClick={() =>
+                                  setConfirmModal({
+                                    member,
+                                    date: ds,
+                                    startTime: block.startTime,
+                                    endTime: block.endTime,
+                                  })
+                                }
+                                className="w-full rounded px-1.5 py-0.5 text-left text-[10px] text-green-400 bg-green-500/5 transition-colors hover:bg-green-500/15 cursor-pointer"
+                              >
+                                <span className="font-medium">
+                                  {(member.name || member.email.split("@")[0]).split(" ")[0]}
+                                </span>
+                                <span className="ml-1 opacity-70">
+                                  {formatTime(block.startTime)}–{formatTime(block.endTime)}
+                                </span>
+                              </button>
+                            ));
+                          })}
                         </div>
                       </div>
                     );
@@ -649,6 +735,49 @@ export function ShiftCalendar({
           })}
         </div>
       </div>
+
+      {/* Confirm Availability Modal */}
+      {confirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-dm-border bg-dm-surface p-6 shadow-2xl">
+            <h3 className="mb-4 text-lg font-semibold text-dm-text">
+              Confirm Shift
+            </h3>
+            <p className="mb-1 text-sm text-dm-text">
+              Schedule{" "}
+              <span className="font-semibold">
+                {confirmModal.member.name || confirmModal.member.email.split("@")[0]}
+              </span>{" "}
+              for this shift?
+            </p>
+            <p className="mb-1 text-sm text-dm-text-muted">
+              {new Date(confirmModal.date + "T12:00:00").toLocaleDateString("en-US", {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+              })}
+            </p>
+            <p className="mb-6 text-sm font-medium text-green-400">
+              {formatTime(confirmModal.startTime)} – {formatTime(confirmModal.endTime)}
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setConfirmModal(null)}
+                className="rounded-lg border border-dm-border px-4 py-2 text-sm font-medium text-dm-text-muted transition-colors hover:text-dm-text"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmAvailability}
+                disabled={confirming}
+                className="rounded-lg bg-brand-lime px-4 py-2 text-sm font-medium text-black transition-colors hover:brightness-110 disabled:opacity-50"
+              >
+                {confirming ? "Scheduling..." : "Confirm"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add/Edit Shift Modal */}
       {showModal && (
